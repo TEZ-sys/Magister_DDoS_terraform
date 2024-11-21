@@ -16,7 +16,7 @@ resource "aws_subnet" "defenders_public_subnet" {
   vpc_id                  = aws_vpc.defenders_vpc.id
   cidr_block              = var.defenders_public_subnet
   map_public_ip_on_launch = true
-  availability_zone       = "eu-west-2a" # Adjust as needed
+  availability_zone       = var.region
   tags                    = { Name = "Defenders_Public_subnet" }
 }
 
@@ -24,7 +24,7 @@ resource "aws_subnet" "defenders_public_subnet" {
 resource "aws_subnet" "defenders_private_subnet" {
   vpc_id            = aws_vpc.defenders_vpc.id
   cidr_block        = var.defenders_private_subnet
-  availability_zone = "eu-west-2a" # Adjust as needed
+  availability_zone = var.region
   tags              = { Name = "Defenders_Private_subnet" }
 }
 

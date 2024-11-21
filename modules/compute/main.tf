@@ -1,17 +1,9 @@
-
-terraform {
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 3.5.0"
-    }
-  }
-}
+#-----------------------------------------Defence-instance---------------------------------------
 resource "aws_instance" "defender_instance" {
-  vpc_security_group_ids = [aws_security_group.defenders_security_group.id]
+  vpc_security_group_ids = [var.module_security_group_defence.id]
   ami                    = coalesce(var.ami, data.aws_ami.latest_ubuntu.id)
   instance_type          = var.inst_type
-  subnet_id              = aws_subnet.defenders_public_subnet.id
+  subnet_id              = "${var.module_defenders_public_subnet.id}"
   user_data = base64encode(<<-EOT
    #!/bin/bash
     apt-get update -y
@@ -26,13 +18,13 @@ EOT
 }
 
 
-
+#-----------------------------------------Attack-instance---------------------------------------
 resource "aws_instance" "atatckers_instance" {
   count                  = 10
-  vpc_security_group_ids = [aws_security_group.defenders_security_group.id]
+  vpc_security_group_ids = [var.module_security_group_defence.id]
   ami                    = coalesce(var.ami, data.aws_ami.latest_ubuntu.id)
-  instance_type          = var.inst_type_attack
-  subnet_id              = aws_subnet.defenders_sub_public_subnet.id
+  instance_type          = "${var.inst_type}"
+  subnet_id              = "${var.module_defenders_sub_public_subnet.id}"
 
   user_data = <<-EOT
     #!/bin/bash

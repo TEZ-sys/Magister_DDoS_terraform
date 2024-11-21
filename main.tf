@@ -16,10 +16,6 @@ provider "aws" {
 
 module "network" {
   source = "./modules/network/"
-  defenders_vpc_cidr       = var.defenders_vpc_cidr
-  defenders_public_subnet  = var.defenders_public_subnet
-  defenders_private_subnet = var.defenders_private_subnet
-  defenders_sub_public_subnet = var.defenders_sub_public_subnet
 }
 
 module "compute" {
@@ -27,7 +23,7 @@ module "compute" {
 }
 
 module "auto-scaling" {
-  source = "./modules/auto-scaling/"
+  source = "./modules/auto_scaling/"
 
 }
 

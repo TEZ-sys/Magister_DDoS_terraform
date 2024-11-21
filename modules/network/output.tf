@@ -1,18 +1,12 @@
-output "defenders_private_subnet" {
-    value=aws_subnet.defenders_private_subnet.id
+output "module_vpc_id" {
+  value = aws_vpc.defenders_vpc
 }
-output "vpc_id" {
-  description = "The ID of the VPC"
-  value       = aws_vpc.defenders_vpc.id
+output "module_defenders_public_subnet" {
+  value = aws_subnet.defenders_public_subnet
 }
-output "subnets_public" {
-  value = aws_subnet.defenders_public_subnet.id
+output "module_defenders_private_subnet" {
+  value = aws_subnet.defenders_private_subnet
 }
-
-output "subnets_public_sub" {
-  value = aws_subnet.defenders_sub_public_subnet.id
-}
-
-output "nat_gateway_id" {
-  value = aws_nat_gateway.defenders_NATgw.id
+output "module_defenders_sub_public_subnet" {
+  value=aws_subnet.defenders_sub_public_subnet
 }

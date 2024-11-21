@@ -1,17 +1,8 @@
-terraform {
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 3.5.0"
-    }
-  }
-}
-
 #---------------------------------aws_security_group-----------------------------
 resource "aws_security_group" "defenders_security_group" {
   name_prefix = "Security-Group for Defenders"
 
-  vpc_id = var.vpc_id
+  vpc_id = "${var.module_vpc_id.id}"
 
   dynamic "ingress" {
     for_each = var.ports
@@ -44,7 +35,7 @@ resource "aws_security_group" "defenders_security_group" {
 resource "aws_security_group" "alb_sg" {
   name = "alb_sg"
 
-  vpc_id = var.vpc_id
+  vpc_id = "${var.module_vpc_id.id}"
 
   dynamic "ingress" {
     for_each = var.ports

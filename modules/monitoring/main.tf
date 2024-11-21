@@ -1,11 +1,4 @@
-terraform {
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 3.5.0"
-    }
-  }
-}
+#----------------------------------Defence-Monitoring-CPU-Scale-In-----------------------------------------------------
 resource "aws_cloudwatch_metric_alarm" "defenders_monitoring_cpu_scale_in" {
   alarm_name                = "defenders-monitoring-cpu"
   comparison_operator       = var.comparison
@@ -19,11 +12,12 @@ resource "aws_cloudwatch_metric_alarm" "defenders_monitoring_cpu_scale_in" {
   insufficient_data_actions = []
 
   dimensions = {
-    InstanceId = aws_instance.defender_instance.id
+    InstanceId = "${var.module_defender_instance.id}"
   }
-  alarm_actions = [aws_autoscaling_policy.scale_in.arn]
+  alarm_actions = [var.module_auto_scaling_scale_in.arn]
 }
 
+#----------------------------------Defence-Monitoring-CPU-Scale-Out-----------------------------------------------------
 resource "aws_cloudwatch_metric_alarm" "defenders_monitoring_cpu_scale_out" {
   alarm_name                = "defenders-monitoring-cpu"
   comparison_operator       = var.comparison
@@ -37,11 +31,12 @@ resource "aws_cloudwatch_metric_alarm" "defenders_monitoring_cpu_scale_out" {
   insufficient_data_actions = []
 
   dimensions = {
-    InstanceId = aws_instance.defender_instance.id
+    InstanceId = "${var.module_defender_instance.id}"
   }
-  alarm_actions = [aws_autoscaling_policy.scale_out.arn]
+  alarm_actions = [var.module_auto_scaling_scale_out.arn]
 }
 
+#----------------------------------Defence-Monitoring-Network--In-----------------------------------------------------
 resource "aws_cloudwatch_metric_alarm" "defenders_monitoring_network_in" {
   alarm_name          = "High-Network-In"
   comparison_operator = var.comparison
@@ -54,10 +49,10 @@ resource "aws_cloudwatch_metric_alarm" "defenders_monitoring_network_in" {
   alarm_description   = "Triggers if NetworkIn exceeds the threshold."
   
   dimensions = {
-    InstanceId = aws_instance.defender_instance.id
+    InstanceId = "${var.module_defender_instance.id}"
   }
 }
-
+#----------------------------------Defence-Monitoring-Network--Out-----------------------------------------------------
 resource "aws_cloudwatch_metric_alarm" "defenders_monitoring_network_out" {
   alarm_name          = "High-Network-Out"
   comparison_operator = var.comparison
@@ -70,6 +65,6 @@ resource "aws_cloudwatch_metric_alarm" "defenders_monitoring_network_out" {
   alarm_description   = "Triggers if NetworkOut exceeds the threshold."
 
   dimensions = {
-    InstanceId = aws_instance.defender_instance.id
+    InstanceId = "${var.module_defender_instance.id}"
   }
 }
