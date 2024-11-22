@@ -1,3 +1,3 @@
-output "module_alb" {
-  value = aws_lb.alb
+output "module_alb_id" {
+  value = aws_lb.alb.id
 }

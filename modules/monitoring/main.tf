@@ -12,9 +12,9 @@ resource "aws_cloudwatch_metric_alarm" "defenders_monitoring_cpu_scale_in" {
   insufficient_data_actions = []
 
   dimensions = {
-    InstanceId = "${var.module_defender_instance.id}"
+    InstanceId = "${var.module_instance_id}"
   }
-  alarm_actions = [var.module_auto_scaling_scale_in.arn]
+  alarm_actions = [var.module_scale_in_id]
 }
 
 #----------------------------------Defence-Monitoring-CPU-Scale-Out-----------------------------------------------------
@@ -31,9 +31,9 @@ resource "aws_cloudwatch_metric_alarm" "defenders_monitoring_cpu_scale_out" {
   insufficient_data_actions = []
 
   dimensions = {
-    InstanceId = "${var.module_defender_instance.id}"
+    InstanceId = "${var.module_instance_id}"
   }
-  alarm_actions = [var.module_auto_scaling_scale_out.arn]
+  alarm_actions = [var.module_scale_out_id]
 }
 
 #----------------------------------Defence-Monitoring-Network--In-----------------------------------------------------
@@ -49,7 +49,7 @@ resource "aws_cloudwatch_metric_alarm" "defenders_monitoring_network_in" {
   alarm_description   = "Triggers if NetworkIn exceeds the threshold."
   
   dimensions = {
-    InstanceId = "${var.module_defender_instance.id}"
+    InstanceId = "${var.module_instance_id}"
   }
 }
 #----------------------------------Defence-Monitoring-Network--Out-----------------------------------------------------
@@ -65,6 +65,6 @@ resource "aws_cloudwatch_metric_alarm" "defenders_monitoring_network_out" {
   alarm_description   = "Triggers if NetworkOut exceeds the threshold."
 
   dimensions = {
-    InstanceId = "${var.module_defender_instance.id}"
+    InstanceId = "${var.module_instance_id}"
   }
 }

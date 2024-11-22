@@ -1,41 +1,63 @@
 variable "scale_in_period" {
-  default = 120
+  description = "Scale in preiod"
+  type        = string
 }
 variable "scale_out_period" {
-  default = 60
+  description = "Scale out period"
+  type        = string
 }
 
 variable "scale_in_threshold" {
-    default = 10
+  description = "Scale in threshold"
+  type        = string
 }
 
 variable "scale_out_threshold" {
-    default = 20
+  description = "Scale out threshold"
+  type        = string
 }
 
 variable "evaluation_periods" {
-  default = 2
+  description = "Evaluation period"
+  type        = string
 }
 
 variable "network_period" {
-  default = 300
+  description = "Network perido"
+  type        = string
 }
 
 variable "network_threshold" {
-  default = 2000000
-  
+  description = "Network threshold"
+  type        = string
 }
 
 variable "metric_name" {
   description = "Sets metric name"
   type        = list(any)
-  default = ["CPUUtilization","NetworkIn","NetworkOut"]
+
 }
 
 variable "comparison" {
-  default="GreaterThanOrEqualToThreshold"
+  description = "Comparison data"
+  type        = string
 }
 
 variable "name_space" {
-  default = "AWS/EC2"
+  description = "Name space"
+  type        = string
+}
+
+variable "module_instance_id" {
+  description = "Instance_id of defender instance"
+  type        = string
+}
+
+variable "module_scale_out_id" {
+    description = "Scale out id"
+    type        = string
+}
+variable "module_scale_in_id" {
+    description = "Scale in id"
+    type        = string
 }

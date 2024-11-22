@@ -1,21 +1,38 @@
 variable "region" {
   description = "AWS London-Region"
-  default     = ["eu-west-2"]
+  type        = string
 }
-
 variable "ports" {
   description = "Allow ports"
   type        = list(any)
-  default     = ["22", "80", "443"]
 }
 
 variable "CIDR" {
   description = "CIDR for ingress and egress"
-  default     = ["0.0.0.0/0"]
+  type        = list(any)
 }
 
-variable "defenders_vpc_cidr" {}
-variable "defenders_public_subnet" {}
-variable "defenders_private_subnet" {}
+variable "defenders_vpc_cidr" {
+      description = "CIDR for VPC"
+  type        = string
+}
 
-variable "defenders_sub_public_subnet" {}
+variable "defenders_public_subnet" {      
+  description = "CIDR for public subnet"
+  type        = string
+}
+
+variable "defenders_private_subnet" {
+  description = "CIDR for private subnet"
+  type        = string
+}
+
+variable "defenders_sub_public_subnet" {
+  description = "CIDR for sub public subnet"
+  type        = string
+}
+
+variable "subnet_id" {
+  description = "CIDR for public subnet"
+  type        = string
+}

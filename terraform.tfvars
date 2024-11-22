@@ -1,0 +1,19 @@
+defenders_vpc_cidr          = "172.16.0.0/16"
+defenders_public_subnet     = "172.16.1.0/24"
+defenders_sub_public_subnet = "172.16.2.0/24"
+defenders_private_subnet    = "172.16.3.0/24"
+
+CIDR                = ["0.0.0.0/0"]
+ports               = ["22", "80", "443"]
+inst_type           = "t2.nano"
+region              = "eu-west-2"
+scale_in_period     = 120
+scale_out_period    = 60
+scale_in_threshold  = 10
+scale_out_threshold = 20
+evaluation_periods  = 2
+network_period      = 300
+network_threshold   = 2000000
+metric_name         = ["CPUUtilization", "NetworkIn", "NetworkOut"]
+comparison          = "GreaterThanOrEqualToThreshold"
+name_space          = "AWS/EC2"

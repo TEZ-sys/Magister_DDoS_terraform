@@ -3,8 +3,8 @@ resource "aws_lb" "alb" {
   name               = "defensive-alb"
   load_balancer_type = "application"
   internal           = false
-  security_groups    = [var.module_alb_security_group.id]
-  subnets            = [var.module_defenders_public_subnet.id, var.module_defenders_sub_public_subnet.id]
+  security_groups    = [var.module_alb_security_group]
+  subnets            = [var.public_subnet_id, var.sub_public_subnet]
 
   enable_deletion_protection = false
   tags = {
@@ -16,7 +16,7 @@ resource "aws_lb_target_group" "target_group" {
   name        = "defense-target-group"
   port        = 80
   protocol    = "HTTP"
-  vpc_id      = "${var.module_vpc_id.id}"
+  vpc_id      = "${var.vpc_id}"
   target_type = "instance"
 
   health_check {
