@@ -1,3 +1,8 @@
+variable "create_resource" {
+  description = "Map of resources to create"
+  type        = map(bool)
+}
+
 variable "region" {
   description = "AWS London-Region"
   type        = string
@@ -5,8 +10,8 @@ variable "region" {
 
 variable "ami" {
   description = "Amazon Machine Image ID for Ubuntu Server 22"
-  type= string
-  default =  ""
+  type        = string
+  default     = ""
 }
 
 variable "inst_type" {

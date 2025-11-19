@@ -1,3 +1,16 @@
+variable "create_resource" {
+  description = "True or false to create a resource"
+  type        = map(bool)
+  default = {
+    instance     = false
+    auto_scale   = false
+    load_balance = false
+    monitoring   = false
+    network      = false
+  }
+}
+
+
 variable "region" {
   description = "AWS London-Region"
   type        = string
@@ -5,8 +18,8 @@ variable "region" {
 
 variable "ami" {
   description = "Amazon Machine Image ID for Ubuntu Server 22"
-  type= string
-  default =  null
+  type        = string
+  default     = null
 }
 
 variable "inst_type" {

@@ -1,3 +1,7 @@
+variable "create_resource" {
+  description = "Map of resources to create"
+  type        = map(bool)
+}
 variable "scale_in_period" {
   description = "Scale in preiod"
   type        = string
@@ -54,10 +58,10 @@ variable "module_instance_id" {
 }
 
 variable "module_scale_out_id" {
-    description = "Scale out id"
-    type        = string
+  description = "Scale out id"
+  type        = string
 }
 variable "module_scale_in_id" {
-    description = "Scale in id"
-    type        = string
+  description = "Scale in id"
+  type        = string
 }

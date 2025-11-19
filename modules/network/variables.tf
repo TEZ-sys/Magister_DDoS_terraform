@@ -1,3 +1,8 @@
+variable "create_resource" {
+  description = "Map of resources to create"
+  type        = map(bool)
+}
+
 variable "region" {
   description = "AWS London-Region"
   type        = string
@@ -13,11 +18,11 @@ variable "CIDR" {
 }
 
 variable "defenders_vpc_cidr" {
-      description = "CIDR for VPC"
+  description = "CIDR for VPC"
   type        = string
 }
 
-variable "defenders_public_subnet" {      
+variable "defenders_public_subnet" {
   description = "CIDR for public subnet"
   type        = string
 }

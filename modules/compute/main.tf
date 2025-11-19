@@ -1,9 +1,10 @@
 #-----------------------------------------Defence-instance---------------------------------------
 resource "aws_instance" "defender_instance" {
+  count                  = var.create_resource["compute"] ? 1 : 0
   vpc_security_group_ids = [aws_security_groups.defenders_security_group.id]
-  ami                    = "${var.ami}"
-  instance_type          = "${var.inst_type}"
-  subnet_id              = "${var.public_subnet_id}"
+  ami                    = var.ami
+  instance_type          = var.inst_type
+  subnet_id              = var.public_subnet_id
   user_data = base64encode(<<-EOT
    #!/bin/bash
     apt-get update -y
@@ -11,7 +12,7 @@ resource "aws_instance" "defender_instance" {
     ufw allow 80
     apt-get install slowhttptest -y
 EOT
-)
+  )
   tags = {
     Name = "Defender"
   }
@@ -20,11 +21,11 @@ EOT
 
 #-----------------------------------------Attack-instance---------------------------------------
 resource "aws_instance" "atatckers_instance" {
-  count                  = 10
+  count                  = var.create_resource["compute"] ? 1 : 0
   vpc_security_group_ids = [aws_security_group.defenders_security_group.id]
-  ami                    = "${var.ami}"
-  instance_type          = "${var.inst_type}"
-  subnet_id              = "${var.sub_public_subnet}"
+  ami                    = var.ami
+  instance_type          = var.inst_type
+  subnet_id              = var.sub_public_subnet
 
   user_data = <<-EOT
     #!/bin/bash
@@ -53,10 +54,10 @@ resource "aws_instance" "atatckers_instance" {
 
 #-----------------------------------------Auto-scaling-group---------------------------------------
 resource "aws_launch_template" "defence_launch_template" {
-
+  count         = var.create_resource["auto_scale"] ? 1 : 0
   name_prefix   = "Default-London-instance"
-  image_id      = "${var.ami}"
-  instance_type = "${var.inst_type}"
+  image_id      = var.ami
+  instance_type = var.inst_type
   network_interfaces {
     security_groups = [aws_security_group.defenders_security_group.id]
   }
@@ -66,13 +67,14 @@ resource "aws_launch_template" "defence_launch_template" {
     apt-get install nginx -y
     ufw allow 80
 EOT
-)
+  )
 }
 
 resource "aws_autoscaling_group" "defence_asg" {
-  desired_capacity   = 1
-  min_size           = 1
-  max_size           = 5
+  count               = var.create_resource["auto_scale"] ? 1 : 0
+  desired_capacity    = 1
+  min_size            = 1
+  max_size            = 5
   vpc_zone_identifier = [var.sub_public_subnet]
 
   launch_template {
@@ -81,6 +83,7 @@ resource "aws_autoscaling_group" "defence_asg" {
 }
 
 resource "aws_autoscaling_policy" "scale_out" {
+  count                  = var.create_resource["monitoring"] ? 1 : 0
   name                   = "scale_out-terraform-policy"
   scaling_adjustment     = 1
   adjustment_type        = "ChangeInCapacity"
@@ -89,6 +92,7 @@ resource "aws_autoscaling_policy" "scale_out" {
 }
 
 resource "aws_autoscaling_policy" "scale_in" {
+  count                  = var.create_resource["monitoring"] ? 1 : 0
   name                   = "scale-in-terraform-policy"
   scaling_adjustment     = -1
   adjustment_type        = "ChangeInCapacity"
@@ -100,7 +104,7 @@ resource "aws_autoscaling_policy" "scale_in" {
 resource "aws_security_group" "defenders_security_group" {
   name_prefix = "Security-Group for Defenders"
 
-  vpc_id = "${var.vpc_id}"
+  vpc_id = var.vpc_id
 
   dynamic "ingress" {
     for_each = var.ports
@@ -131,9 +135,10 @@ resource "aws_security_group" "defenders_security_group" {
 
 
 resource "aws_security_group" "alb_sg" {
-  name = "alb_sg"
+  count = var.create_resource["load_balance"] ? 1 : 0
+  name  = "alb_sg"
 
-  vpc_id = "${var.vpc_id}"
+  vpc_id = var.vpc_id
 
   dynamic "ingress" {
     for_each = var.ports

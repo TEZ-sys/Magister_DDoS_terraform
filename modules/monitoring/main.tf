@@ -1,5 +1,6 @@
 #----------------------------------Defence-Monitoring-CPU-Scale-In-----------------------------------------------------
 resource "aws_cloudwatch_metric_alarm" "defenders_monitoring_cpu_scale_in" {
+  count                     = var.create_resource["monitoring"] ? 1 : 0
   alarm_name                = "defenders-monitoring-cpu"
   comparison_operator       = var.comparison
   evaluation_periods        = var.evaluation_periods
@@ -19,6 +20,8 @@ resource "aws_cloudwatch_metric_alarm" "defenders_monitoring_cpu_scale_in" {
 
 #----------------------------------Defence-Monitoring-CPU-Scale-Out-----------------------------------------------------
 resource "aws_cloudwatch_metric_alarm" "defenders_monitoring_cpu_scale_out" {
+  count = var.create_resource["monitoring"] ? 1 : 0
+
   alarm_name                = "defenders-monitoring-cpu"
   comparison_operator       = var.comparison
   evaluation_periods        = var.evaluation_periods
@@ -38,6 +41,8 @@ resource "aws_cloudwatch_metric_alarm" "defenders_monitoring_cpu_scale_out" {
 
 #----------------------------------Defence-Monitoring-Network--In-----------------------------------------------------
 resource "aws_cloudwatch_metric_alarm" "defenders_monitoring_network_in" {
+  count = var.create_resource["monitoring"] ? 1 : 0
+
   alarm_name          = "High-Network-In"
   comparison_operator = var.comparison
   evaluation_periods  = var.evaluation_periods
@@ -47,13 +52,15 @@ resource "aws_cloudwatch_metric_alarm" "defenders_monitoring_network_in" {
   statistic           = "Average"
   threshold           = var.network_threshold # Set your desired threshold in bytes
   alarm_description   = "Triggers if NetworkIn exceeds the threshold."
-  
+
   dimensions = {
     InstanceId = "${var.module_instance_id}"
   }
 }
 #----------------------------------Defence-Monitoring-Network--Out-----------------------------------------------------
 resource "aws_cloudwatch_metric_alarm" "defenders_monitoring_network_out" {
+  count = var.create_resource["monitoring"] ? 1 : 0
+
   alarm_name          = "High-Network-Out"
   comparison_operator = var.comparison
   evaluation_periods  = var.evaluation_periods

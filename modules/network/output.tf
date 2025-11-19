@@ -8,5 +8,5 @@ output "module_defenders_private_subnet_id" {
   value = aws_subnet.defenders_private_subnet.id
 }
 output "module_defenders_sub_public_subnet_id" {
-  value=aws_subnet.defenders_sub_public_subnet.id
+  value = aws_subnet.defenders_sub_public_subnet.id
 }

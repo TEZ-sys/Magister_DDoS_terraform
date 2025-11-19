@@ -7,11 +7,11 @@ output "module_defender_instance_ip" {
 }
 
 output "module_scale_out_id" {
-  value= aws_autoscaling_policy.scale_out.id
+  value = aws_autoscaling_policy.scale_out.id
 }
 
 output "module_scale_in_id" {
-  value= aws_autoscaling_policy.scale_in.id
+  value = aws_autoscaling_policy.scale_in.id
 }
 
 output "module_security_group_defence_id" {
@@ -21,7 +21,7 @@ output "module_alb_security_group_defence_id" {
   value = aws_security_group.alb_sg.id
 }
 output "module_alb_security_group" {
-  value=aws_security_group.alb_sg.id
+  value = aws_security_group.alb_sg.id
 }
 data "aws_availability_zones" "all" {}
 
