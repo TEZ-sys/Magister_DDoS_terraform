@@ -11,7 +11,6 @@ terraform {
 provider "aws" {
   region  = var.region
   profile = "Terraform-Diplom"
-
 }
 
 module "network" {
@@ -36,7 +35,7 @@ module "compute" {
   CIDR              = var.CIDR
   public_subnet_id  = module.network.module_defenders_public_subnet_id
   sub_public_subnet = module.network.module_sub_defenders_public_subnet_id
-  vpc_id            = module.compute.module_vpc_id
+  vpc_id            = module.network.module_vpc_id 
 }
 
 module "load_balancer" {
@@ -47,7 +46,7 @@ module "load_balancer" {
   module_instance_id        = module.compute.module_defender_instance_id
   public_subnet_id          = module.network.module_defenders_public_subnet_id
   sub_public_subnet         = module.network.module_sub_defenders_public_subnet_id
-  vpc_id                    = module.compute.module_vpc_id
+  vpc_id                    = module.network.module_vpc_id 
   module_alb_security_group = module.compute.module_alb_security_group_defence_id
 }
 
@@ -65,6 +64,6 @@ module "monitoring" {
   metric_name         = var.metric_name
   comparison          = var.comparison
   module_instance_id  = module.compute.module_defender_instance_id
-  module_scale_out_id = module.compute.module_auto_scaling_scale_out
-  module_scale_in_id  = module.compute.module_auto_scaling_scale_in
+  module_scale_out_id = module.compute.module_scale_out_id 
+  module_scale_in_id  = module.compute.module_scale_in_id 
 }

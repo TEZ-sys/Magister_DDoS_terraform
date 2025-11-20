@@ -1,6 +1,6 @@
 #-----------------------------------------Defence-instance---------------------------------------
 resource "aws_instance" "defender_instance" {
-  count                  = var.create_resource["compute"] ? 1 : 0
+  count                  = var.create_resource["instance"] ? 1 : 0
   vpc_security_group_ids = [aws_security_groups.defenders_security_group.id]
   ami                    = var.ami
   instance_type          = var.inst_type
@@ -21,7 +21,7 @@ EOT
 
 #-----------------------------------------Attack-instance---------------------------------------
 resource "aws_instance" "atatckers_instance" {
-  count                  = var.create_resource["compute"] ? 1 : 0
+  count                  = var.create_resource["instance"] ? 1 : 0
   vpc_security_group_ids = [aws_security_group.defenders_security_group.id]
   ami                    = var.ami
   instance_type          = var.inst_type
@@ -41,10 +41,6 @@ resource "aws_instance" "atatckers_instance" {
     done
     #ping $TARGET_IP -S 65000 -i 0.0000001
   EOT
-
-  depends_on = [
-    aws_instance.defender_instance
-  ]
 
   tags = {
     Name        = "Attacker_instance_number${count.index + 1}"
@@ -102,6 +98,7 @@ resource "aws_autoscaling_policy" "scale_in" {
 
 #---------------------------------aws_security_group-----------------------------
 resource "aws_security_group" "defenders_security_group" {
+  count       = var.create_resource["instance"] ? 1 : 0
   name_prefix = "Security-Group for Defenders"
 
   vpc_id = var.vpc_id

@@ -1,3 +1,3 @@
 output "module_alb_id" {
-  value = aws_lb.alb.id
+  value = var.create_resource["load_balance"] ? aws_lb.alb.id : null
 }
