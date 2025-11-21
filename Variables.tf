@@ -2,11 +2,20 @@ variable "create_resource" {
   description = "True or false to create a resource"
   type        = map(bool)
   default = {
-    instance     = false
+    instance     = true
     auto_scale   = false
     load_balance = false
     monitoring   = false
-    network      = false
+  }
+}
+
+variable "scaleout_capacity" {
+  description = "Amount of instances for each of ASG"
+  type        = map(number)
+  default = {
+    min     = 1
+    max   = 3
+    desired = 2
   }
 }
 
@@ -37,22 +46,22 @@ variable "CIDR" {
   type        = list(any)
 }
 
-variable "defenders_vpc_cidr" {
+variable "standarts_vpc_cidr" {
   description = "CIDR for VPC"
   type        = string
 }
 
-variable "defenders_public_subnet" {
+variable "standarts_public_subnet" {
   description = "CIDR for public subnet"
   type        = string
 }
 
-variable "defenders_private_subnet" {
+variable "standarts_private_subnet" {
   description = "CIDR for private subnet"
   type        = string
 }
 
-variable "defenders_sub_public_subnet" {
+variable "standarts_sub_public_subnet" {
   description = "CIDR for sub public subnet"
   type        = string
 }

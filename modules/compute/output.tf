@@ -1,11 +1,11 @@
-output "module_defender_instance_id" {
-  value       = var.create_resource["instance"] ? aws_instance.defender_instance[0].id : null
-  description = "ID of the defender instance"
+output "module_standart_instance_id" {
+  value       = var.create_resource["instance"] ? aws_instance.standart_instance[0].id : null
+  description = "ID of the standart instance"
 }
 
-output "module_defender_instance_ip" {
-  value       = var.create_resource["instance"] ? aws_instance.defender_instance[0].public_ip : null
-  description = "Public IP of the defender instance"
+output "module_standart_instance_ip" {
+  value       = var.create_resource["instance"] ? aws_instance.standart_instance[0].public_ip : null
+  description = "Public IP of the standart instance"
 }
 
 output "module_scale_out_id" {
@@ -18,12 +18,12 @@ output "module_scale_in_id" {
   description = "ID of the scale in policy"
 }
 
-output "module_security_group_defence_id" {
-  value       = aws_security_group.defenders_security_group.id
-  description = "ID of the defenders security group"
+output "module_security_group_standart_id" {
+  value       = aws_security_group.standarts_security_group.id
+  description = "ID of the standarts security group"
 }
 
-output "module_alb_security_group_defence_id" {
+output "module_alb_security_group_standart_id" {
   value       = var.create_resource["load_balance"] ? aws_security_group.alb_sg[0].id : null
   description = "ID of the ALB security group"
 }

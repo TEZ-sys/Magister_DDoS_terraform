@@ -1,7 +1,7 @@
-#----------------------------------Defence-Monitoring-CPU-Scale-In-----------------------------------------------------
-resource "aws_cloudwatch_metric_alarm" "defenders_monitoring_cpu_scale_in" {
+#----------------------------------standart-Monitoring-CPU-Scale-In-----------------------------------------------------
+resource "aws_cloudwatch_metric_alarm" "standarts_monitoring_cpu_scale_in" {
   count                     = var.create_resource["monitoring"] ? 1 : 0
-  alarm_name                = "defenders-monitoring-cpu"
+  alarm_name                = "standarts-monitoring-cpu"
   comparison_operator       = var.comparison
   evaluation_periods        = var.evaluation_periods
   metric_name               = var.metric_name[0]
@@ -18,11 +18,11 @@ resource "aws_cloudwatch_metric_alarm" "defenders_monitoring_cpu_scale_in" {
   alarm_actions = [var.module_scale_in_id]
 }
 
-#----------------------------------Defence-Monitoring-CPU-Scale-Out-----------------------------------------------------
-resource "aws_cloudwatch_metric_alarm" "defenders_monitoring_cpu_scale_out" {
+#----------------------------------standart-Monitoring-CPU-Scale-Out-----------------------------------------------------
+resource "aws_cloudwatch_metric_alarm" "standarts_monitoring_cpu_scale_out" {
   count = var.create_resource["monitoring"] ? 1 : 0
 
-  alarm_name                = "defenders-monitoring-cpu"
+  alarm_name                = "standarts-monitoring-cpu"
   comparison_operator       = var.comparison
   evaluation_periods        = var.evaluation_periods
   metric_name               = var.metric_name[0]
@@ -39,8 +39,8 @@ resource "aws_cloudwatch_metric_alarm" "defenders_monitoring_cpu_scale_out" {
   alarm_actions = [var.module_scale_out_id]
 }
 
-#----------------------------------Defence-Monitoring-Network--In-----------------------------------------------------
-resource "aws_cloudwatch_metric_alarm" "defenders_monitoring_network_in" {
+#----------------------------------standart-Monitoring-Network--In-----------------------------------------------------
+resource "aws_cloudwatch_metric_alarm" "standarts_monitoring_network_in" {
   count = var.create_resource["monitoring"] ? 1 : 0
 
   alarm_name          = "High-Network-In"
@@ -57,8 +57,8 @@ resource "aws_cloudwatch_metric_alarm" "defenders_monitoring_network_in" {
     InstanceId = "${var.module_instance_id}"
   }
 }
-#----------------------------------Defence-Monitoring-Network--Out-----------------------------------------------------
-resource "aws_cloudwatch_metric_alarm" "defenders_monitoring_network_out" {
+#----------------------------------standart-Monitoring-Network--Out-----------------------------------------------------
+resource "aws_cloudwatch_metric_alarm" "standarts_monitoring_network_out" {
   count = var.create_resource["monitoring"] ? 1 : 0
 
   alarm_name          = "High-Network-Out"

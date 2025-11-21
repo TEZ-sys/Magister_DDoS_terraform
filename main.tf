@@ -19,11 +19,11 @@ module "network" {
   region                      = var.region
   ports                       = var.ports
   CIDR                        = var.CIDR
-  defenders_vpc_cidr          = var.defenders_vpc_cidr
-  defenders_public_subnet     = var.defenders_public_subnet
-  defenders_sub_public_subnet = var.defenders_sub_public_subnet
-  defenders_private_subnet    = var.defenders_private_subnet
-  subnet_id                   = module.network.module_defenders_public_subnet_id
+  standarts_vpc_cidr          = var.standarts_vpc_cidr
+  standarts_public_subnet     = var.standarts_public_subnet
+  standarts_sub_public_subnet = var.standarts_sub_public_subnet
+  standarts_private_subnet    = var.standarts_private_subnet
+  subnet_id                   = module.network.module_standarts_public_subnet_id
 }
 
 module "compute" {
@@ -33,9 +33,10 @@ module "compute" {
   inst_type         = var.inst_type
   ports             = var.ports
   CIDR              = var.CIDR
-  public_subnet_id  = module.network.module_defenders_public_subnet_id
-  sub_public_subnet = module.network.module_defenders_sub_public_subnet_id
+  public_subnet_id  = module.network.module_standarts_public_subnet_id
+  sub_public_subnet = module.network.module_standarts_sub_public_subnet_id
   vpc_id            = module.network.module_vpc_id
+  scale_out_capacity = var.scaleout_capacity
 }
 
 module "load_balancer" {
@@ -43,11 +44,11 @@ module "load_balancer" {
   source                    = "./modules/load_balancer"
   region                    = var.region
   ports                     = var.ports
-  module_instance_id        = module.compute.module_defender_instance_id
-  public_subnet_id          = module.network.module_defenders_public_subnet_id
-  sub_public_subnet         = module.network.module_defenders_sub_public_subnet_id
+  module_instance_id        = module.compute.module_standart_instance_id
+  public_subnet_id          = module.network.module_standarts_public_subnet_id
+  sub_public_subnet         = module.network.module_standarts_sub_public_subnet_id
   vpc_id                    = module.network.module_vpc_id
-  module_alb_security_group = module.compute.module_alb_security_group_defence_id
+  module_alb_security_group = module.compute.module_alb_security_group_standart_id
 }
 
 module "monitoring" {
@@ -63,7 +64,7 @@ module "monitoring" {
   network_threshold   = var.network_threshold
   metric_name         = var.metric_name
   comparison          = var.comparison
-  module_instance_id  = module.compute.module_defender_instance_id
+  module_instance_id  = module.compute.module_standart_instance_id
   module_scale_out_id = module.compute.module_scale_out_id
   module_scale_in_id  = module.compute.module_scale_in_id
 }

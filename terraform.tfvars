@@ -1,7 +1,7 @@
-defenders_vpc_cidr          = "172.16.0.0/16"
-defenders_public_subnet     = "172.16.1.0/24"
-defenders_sub_public_subnet = "172.16.2.0/24"
-defenders_private_subnet    = "172.16.3.0/24"
+standarts_vpc_cidr          = "172.16.0.0/16"
+standarts_public_subnet     = "172.16.1.0/24"
+standarts_sub_public_subnet = "172.16.2.0/24"
+standarts_private_subnet    = "172.16.3.0/24"
 
 CIDR                = ["0.0.0.0/0"]
 ports               = ["22", "80", "443"]

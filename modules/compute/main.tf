@@ -1,39 +1,42 @@
-#-----------------------------------------Defence-instance---------------------------------------
-resource "aws_instance" "defender_instance" {
+#-----------------------------------------standart-instance---------------------------------------
+resource "aws_instance" "standart_instance" {
   count                  = var.create_resource["instance"] ? 1 : 0
-  vpc_security_group_ids = [aws_security_group.defenders_security_group.id]
+  vpc_security_group_ids = [aws_security_group.standarts_security_group.id]
   ami                    = var.ami
   instance_type          = var.inst_type
   subnet_id              = var.public_subnet_id
 
   tags = {
-    Name = "Defender"
+    Name = "dfutumai-standart-instance"
+    Owner = "dfutumai"
+    Environment = "production"
   }
 }
 
 
 #-----------------------------------------Attack-instance---------------------------------------
-resource "aws_instance" "atatckers_instance" {
+resource "aws_instance" "sub_instance" {
   count                  = var.create_resource["instance"] ? 1 : 0
-  vpc_security_group_ids = [aws_security_group.defenders_security_group.id]
+  vpc_security_group_ids = [aws_security_group.standarts_security_group.id]
   ami                    = var.ami
   instance_type          = var.inst_type
   subnet_id              = var.sub_public_subnet
 
   tags = {
-    Name        = "Attacker_instance_number${count.index + 1}"
+    Name = "dfutumai-sub-instance"
+    Owner = "dfutumai"
     Environment = "dev"
   }
 }
 
 #-----------------------------------------Auto-scaling-group---------------------------------------
-resource "aws_launch_template" "defence_launch_template" {
+resource "aws_launch_template" "standart_launch_template" {
   count         = var.create_resource["auto_scale"] ? 1 : 0
   name_prefix   = "Default-London-instance"
   image_id      = var.ami
   instance_type = var.inst_type
   network_interfaces {
-    security_groups = [aws_security_group.defenders_security_group.id]
+    security_groups = [aws_security_group.standarts_security_group.id]
   }
   user_data = base64encode(<<-EOT
    #!/bin/bash
@@ -44,15 +47,15 @@ EOT
   )
 }
 
-resource "aws_autoscaling_group" "defence_asg" {
+resource "aws_autoscaling_group" "standart_asg" {
   count               = var.create_resource["auto_scale"] ? 1 : 0
-  desired_capacity    = 1
-  min_size            = 1
-  max_size            = 5
+  desired_capacity    = var.scale_out_capacity["desired"]
+  min_size            = var.scale_out_capacity["min"]
+  max_size            = var.scale_out_capacity["max"]
   vpc_zone_identifier = [var.sub_public_subnet]
 
   launch_template {
-    id = aws_launch_template.defence_launch_template[0].id
+    id = aws_launch_template.standart_launch_template[0].id
   }
 }
 
@@ -62,7 +65,7 @@ resource "aws_autoscaling_policy" "scale_out" {
   scaling_adjustment     = 1
   adjustment_type        = "ChangeInCapacity"
   cooldown               = 50
-  autoscaling_group_name = aws_autoscaling_group.defence_asg[count.index].name
+  autoscaling_group_name = aws_autoscaling_group.standart_asg[count.index].name
 }
 
 resource "aws_autoscaling_policy" "scale_in" {
@@ -71,12 +74,12 @@ resource "aws_autoscaling_policy" "scale_in" {
   scaling_adjustment     = -1
   adjustment_type        = "ChangeInCapacity"
   cooldown               = 100
-  autoscaling_group_name = aws_autoscaling_group.defence_asg[count.index].name
+  autoscaling_group_name = aws_autoscaling_group.standart_asg[count.index].name
 }
 
 #---------------------------------aws_security_group-----------------------------
-resource "aws_security_group" "defenders_security_group" {
-  name_prefix = "Security-Group for Defenders"
+resource "aws_security_group" "standarts_security_group" {
+  name_prefix = "Security-Group for standarts"
 
   vpc_id = var.vpc_id
 
@@ -103,7 +106,7 @@ resource "aws_security_group" "defenders_security_group" {
   }
 
   tags = {
-    Name = "Defenders_Security_group"
+    Name = "standarts_Security_group"
   }
 }
 

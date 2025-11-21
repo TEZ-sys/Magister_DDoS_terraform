@@ -3,6 +3,11 @@ variable "create_resource" {
   type        = map(bool)
 }
 
+variable "scale_out_capacity" {
+  description = "Amount of instances for each of ASG"
+  type        = map(number)
+}
+
 variable "region" {
   description = "AWS London-Region"
   type        = string

@@ -53,7 +53,7 @@ variable "name_space" {
 }
 
 variable "module_instance_id" {
-  description = "Instance_id of defender instance"
+  description = "Instance_id of standart instance"
   type        = string
 }
 

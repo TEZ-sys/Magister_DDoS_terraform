@@ -28,7 +28,7 @@ variable "sub_public_subnet" {
 }
 
 variable "module_instance_id" {
-  description = "Instance_id of defender instance"
+  description = "Instance_id of standart instance"
   type        = string
   default     = null
 }
