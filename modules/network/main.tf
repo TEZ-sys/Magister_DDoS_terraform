@@ -1,117 +1,147 @@
-#---------------------------------standarts-VPC----------------------------------
-resource "aws_vpc" "standarts_vpc" {
+#---------------------------------standart-VPC----------------------------------
+resource "aws_vpc" "standart_vpc" {
 
-  cidr_block       = var.standarts_vpc_cidr
+  cidr_block       = var.standart_vpc_cidr
   instance_tenancy = "default"
-  tags             = { Name = "standart_VPC" }
+  tags = {
+    Name        = "${var.resource_owner["name"]} + -VPC"
+    Owner       = "${var.resource_owner["owner"]}"
+    Environment = "${var.resource_owner["Prod_Environment"]}"
+  }
 }
 
-#---------------------------------standarts-IGW----------------------------------
-resource "aws_internet_gateway" "standarts_IGW" {
+#---------------------------------standart-IGW----------------------------------
+resource "aws_internet_gateway" "standart_IGW" {
 
-  vpc_id = aws_vpc.standarts_vpc.id
-  tags   = { Name = "standarts_IGW" }
+  vpc_id = aws_vpc.standart_vpc.id
+  tags = {
+    Name        = "${var.resource_owner["name"]}-IGW"
+    Owner       = "${var.resource_owner["owner"]}"
+    Environment = "${var.resource_owner["Prod_Environment"]}"
+  }
 }
 
 #---------------------------------Public Subnet---------------------------------
-resource "aws_subnet" "standarts_public_subnet" {
+resource "aws_subnet" "standart_public_subnet" {
 
-  vpc_id                  = aws_vpc.standarts_vpc.id
-  cidr_block              = var.standarts_public_subnet
+  vpc_id                  = aws_vpc.standart_vpc.id
+  cidr_block              = var.standart_public_subnet
   map_public_ip_on_launch = true
   availability_zone       = var.availability_zones["az1"]
-  tags                    = { Name = "standarts_Public_subnet" }
+  tags = {
+    Name        = "${var.resource_owner["name"]}-Pub-Subnet"
+    Owner       = "${var.resource_owner["owner"]}"
+    Environment = "${var.resource_owner["Prod_Environment"]}"
+  }
 }
 
 #---------------------------------Private Subnet---------------------------------
-resource "aws_subnet" "standarts_private_subnet" {
+resource "aws_subnet" "standart_private_subnet" {
 
-  vpc_id            = aws_vpc.standarts_vpc.id
-  cidr_block        = var.standarts_private_subnet
-  availability_zone       = var.availability_zones["az1"]
-  tags              = { Name = "standarts_Private_subnet" }
+  vpc_id            = aws_vpc.standart_vpc.id
+  cidr_block        = var.standart_private_subnet
+  availability_zone = var.availability_zones["az1"]
+  tags = {
+    Name        = "${var.resource_owner["name"]}-Priv-Subnet"
+    Owner       = "${var.resource_owner["owner"]}"
+    Environment = "${var.resource_owner["Prod_Environment"]}"
+  }
 }
 
 #------------------------------------Public Route Table--------------------------
-resource "aws_route_table" "standarts_PublicRT" {
+resource "aws_route_table" "standart_PublicRT" {
 
-  vpc_id = aws_vpc.standarts_vpc.id
+  vpc_id = aws_vpc.standart_vpc.id
   route {
     cidr_block = "0.0.0.0/0"
-    gateway_id = aws_internet_gateway.standarts_IGW.id
+    gateway_id = aws_internet_gateway.standart_IGW.id
   }
-  tags = { Name = "standarts_PublicRT" }
+  tags = {
+    Name        = "${var.resource_owner["name"]}-PubRT"
+    Owner       = "${var.resource_owner["owner"]}"
+    Environment = "${var.resource_owner["Prod_Environment"]}"
+  }
 }
 
 #------------------------------------Private Route Table-------------------------
-resource "aws_route_table" "standarts_PrivateRT" {
+resource "aws_route_table" "standart_PrivateRT" {
 
-  vpc_id = aws_vpc.standarts_vpc.id
+  vpc_id = aws_vpc.standart_vpc.id
   route {
     cidr_block     = "0.0.0.0/0"
-    nat_gateway_id = aws_nat_gateway.standarts_NATgw.id
+    nat_gateway_id = aws_nat_gateway.standart_NATgw.id
   }
-  tags = { Name = "standarts_PrivateRT" }
+  tags = {
+    Name        = "${var.resource_owner["name"]}-PrvRT"
+    Owner       = "${var.resource_owner["owner"]}"
+    Environment = "${var.resource_owner["Prod_Environment"]}"
+  }
 }
 
 #--------------------------------Public Route Table Association------------------
-resource "aws_route_table_association" "standarts_PublicRTassociation" {
+resource "aws_route_table_association" "standart_PublicRTassociation" {
 
-  subnet_id      = aws_subnet.standarts_public_subnet.id
-  route_table_id = aws_route_table.standarts_PublicRT.id
+  subnet_id      = aws_subnet.standart_public_subnet.id
+  route_table_id = aws_route_table.standart_PublicRT.id
 }
 
 #---------------------------------Private Route Table Association----------------
-resource "aws_route_table_association" "standarts_PrivateRTassociation" {
+resource "aws_route_table_association" "standart_PrivateRTassociation" {
 
-  subnet_id      = aws_subnet.standarts_private_subnet.id
-  route_table_id = aws_route_table.standarts_PrivateRT.id
+  subnet_id      = aws_subnet.standart_private_subnet.id
+  route_table_id = aws_route_table.standart_PrivateRT.id
 }
 
 #---------------------------------sub_Public Subnet---------------------------------
-resource "aws_subnet" "standarts_sub_public_subnet" {
+resource "aws_subnet" "standart_sub_public_subnet" {
 
-  vpc_id                  = aws_vpc.standarts_vpc.id
-  cidr_block              = var.standarts_sub_public_subnet
+  vpc_id                  = aws_vpc.standart_vpc.id
+  cidr_block              = var.standart_sub_public_subnet
   map_public_ip_on_launch = true
   availability_zone       = var.availability_zones["az2"]
-  tags                    = { Name = "sub_standarts_Public_subnet" }
 }
 
 #------------------------------------sub_Public Route Table--------------------------
-resource "aws_route_table" "sub_standarts_PublicRT" {
+resource "aws_route_table" "sub_standart_PublicRT" {
 
-  vpc_id = aws_vpc.standarts_vpc.id
+  vpc_id = aws_vpc.standart_vpc.id
   route {
     cidr_block = "0.0.0.0/0"
-    gateway_id = aws_internet_gateway.standarts_IGW.id
+    gateway_id = aws_internet_gateway.standart_IGW.id
   }
-  tags = { Name = "sub_standarts_PublicRT" }
 }
 
 
 #--------------------------------Public Route Table Association------------------
-resource "aws_route_table_association" "sub_standarts_PublicRTassociation" {
+resource "aws_route_table_association" "sub_standart_PublicRTassociation" {
 
-  subnet_id      = aws_subnet.standarts_sub_public_subnet.id
-  route_table_id = aws_route_table.sub_standarts_PublicRT.id
+  subnet_id      = aws_subnet.standart_sub_public_subnet.id
+  route_table_id = aws_route_table.sub_standart_PublicRT.id
 }
 
 
 #-------------------------------------Elastic IP---------------------------------
 # Allocate an Elastic IP for the NAT Gateway
-resource "aws_eip" "standarts_nat_eip" {
+resource "aws_eip" "standart_nat_eip" {
 
-  vpc  = true
-  tags = { Name = "standarts_nat_eip" }
+  vpc = true
+  tags = {
+    Name        = "${var.resource_owner["name"]}-NAT-EIP"
+    Owner       = "${var.resource_owner["owner"]}"
+    Environment = "${var.resource_owner["Stage_Environment"]}"
+  }
 }
 
 #--------------------------------NAT Gateway-------------------------------------
 # Create the NAT Gateway using the Elastic IP in the public subnet
-resource "aws_nat_gateway" "standarts_NATgw" {
+resource "aws_nat_gateway" "standart_NATgw" {
 
-  allocation_id = aws_eip.standarts_nat_eip.id
-  subnet_id     = aws_subnet.standarts_public_subnet.id
-  tags          = { Name = "standarts_NATgw" }
+  allocation_id = aws_eip.standart_nat_eip.id
+  subnet_id     = aws_subnet.standart_public_subnet.id
+  tags = {
+    Name        = "${var.resource_owner["name"]}-NAT-GW"
+    Owner       = "${var.resource_owner["owner"]}"
+    Environment = "${var.resource_owner["Stage_Environment"]}"
+  }
 }
 

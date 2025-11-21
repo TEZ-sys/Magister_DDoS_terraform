@@ -7,6 +7,10 @@ variable "scale_out_capacity" {
   description = "Amount of instances for each of ASG"
   type        = map(number)
 }
+variable "resource_owner" {
+  description = "Owner of resources"
+  type        = map(string)
+}
 
 variable "region" {
   description = "AWS London-Region"

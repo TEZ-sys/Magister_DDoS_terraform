@@ -1,15 +1,15 @@
 #-----------------------------------------standart-instance---------------------------------------
 resource "aws_instance" "standart_instance" {
   count                  = var.create_resource["instance"] ? 1 : 0
-  vpc_security_group_ids = [aws_security_group.standarts_security_group.id]
+  vpc_security_group_ids = [aws_security_group.standart_security_group.id]
   ami                    = var.ami != "" ? var.ami : data.aws_ami.latest_ubuntu.id
   instance_type          = var.inst_type
   subnet_id              = var.public_subnet_id
 
   tags = {
-    Name = "dfutumai-standart-instance"
-    Owner = "dfutumai"
-    Environment = "production"
+    Name        = "${var.resource_owner["name"]}-instance"
+    Owner       = "${var.resource_owner["owner"]}"
+    Environment = "${var.resource_owner["Prod_Environment"]}"
   }
 }
 
@@ -17,15 +17,15 @@ resource "aws_instance" "standart_instance" {
 #-----------------------------------------Sub-instance---------------------------------------
 resource "aws_instance" "sub_instance" {
   count                  = var.create_resource["instance"] ? 1 : 0
-  vpc_security_group_ids = [aws_security_group.standarts_security_group.id]
+  vpc_security_group_ids = [aws_security_group.standart_security_group.id]
   ami                    = var.ami != "" ? var.ami : data.aws_ami.latest_ubuntu.id
   instance_type          = var.inst_type
   subnet_id              = var.sub_public_subnet
 
   tags = {
-    Name = "dfutumai-sub-instance"
-    Owner = "dfutumai"
-    Environment = "dev"
+    Name        = "${var.resource_owner["name"]}-instance"
+    Owner       = "${var.resource_owner["owner"]}"
+    Environment = "${var.resource_owner["Stage_Environment"]}"
   }
 }
 
@@ -36,7 +36,7 @@ resource "aws_launch_template" "standart_launch_template" {
   image_id      = var.ami != "" ? var.ami : data.aws_ami.latest_ubuntu.id
   instance_type = var.inst_type
   network_interfaces {
-    security_groups = [aws_security_group.standarts_security_group.id]
+    security_groups = [aws_security_group.standart_security_group.id]
   }
   user_data = base64encode(<<-EOT
    #!/bin/bash
@@ -45,6 +45,11 @@ resource "aws_launch_template" "standart_launch_template" {
     ufw allow 80
 EOT
   )
+  tags = {
+    Name        = "${var.resource_owner["name"]}-Launch-template"
+    Owner       = "${var.resource_owner["owner"]}"
+    Environment = "${var.resource_owner["Prod_Environment"]}"
+  }
 }
 
 resource "aws_autoscaling_group" "standart_asg" {
@@ -57,6 +62,18 @@ resource "aws_autoscaling_group" "standart_asg" {
   launch_template {
     id = aws_launch_template.standart_launch_template[0].id
   }
+  tags = [{
+    key   = "Name"
+    value = "${var.resource_owner["name"]}-ASG"
+    },
+    {
+      key   = "Owner"
+      value = "${var.resource_owner["owner"]}"
+    },
+    {
+      key   = "Environment"
+      value = "${var.resource_owner["Prod_Environment"]}"
+  }]
 }
 
 resource "aws_autoscaling_policy" "scale_out" {
@@ -78,8 +95,8 @@ resource "aws_autoscaling_policy" "scale_in" {
 }
 
 #---------------------------------aws_security_group-----------------------------
-resource "aws_security_group" "standarts_security_group" {
-  name_prefix = "Security-Group for standarts"
+resource "aws_security_group" "standart_security_group" {
+  name_prefix = "Security-Group for standart"
 
   vpc_id = var.vpc_id
 
@@ -106,7 +123,9 @@ resource "aws_security_group" "standarts_security_group" {
   }
 
   tags = {
-    Name = "standarts_Security_group"
+    Name        = "${var.resource_owner["name"]}-Security-Group"
+    Owner       = "${var.resource_owner["owner"]}"
+    Environment = "${var.resource_owner["Prod_Environment"]}"
   }
 }
 
@@ -140,6 +159,8 @@ resource "aws_security_group" "alb_sg" {
   }
 
   tags = {
-    Name = "alb-sg"
+    Name        = "${var.resource_owner["name"]}-ALB-Security-Group"
+    Owner       = "${var.resource_owner["owner"]}"
+    Environment = "${var.resource_owner["Prod_Environment"]}"
   }
 }

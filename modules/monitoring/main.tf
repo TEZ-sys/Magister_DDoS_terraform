@@ -1,7 +1,7 @@
 #----------------------------------standart-Monitoring-CPU-Scale-In-----------------------------------------------------
-resource "aws_cloudwatch_metric_alarm" "standarts_monitoring_cpu_scale_in" {
+resource "aws_cloudwatch_metric_alarm" "standart_monitoring_cpu_scale_in" {
   count                     = var.create_resource["monitoring"] ? 1 : 0
-  alarm_name                = "standarts-monitoring-cpu"
+  alarm_name                = "standart-monitoring-cpu"
   comparison_operator       = var.comparison
   evaluation_periods        = var.evaluation_periods
   metric_name               = var.metric_name[0]
@@ -16,13 +16,19 @@ resource "aws_cloudwatch_metric_alarm" "standarts_monitoring_cpu_scale_in" {
     InstanceId = "${var.module_instance_id}"
   }
   alarm_actions = [var.module_scale_in_id]
+
+  tags = {
+    Name        = "${var.resource_owner["name"]}-Cloudwatch-Alarm-CPU-Scale-In"
+    Owner       = "${var.resource_owner["owner"]}"
+    Environment = "${var.resource_owner["Prod_Environment"]}"
+  }
 }
 
 #----------------------------------standart-Monitoring-CPU-Scale-Out-----------------------------------------------------
-resource "aws_cloudwatch_metric_alarm" "standarts_monitoring_cpu_scale_out" {
+resource "aws_cloudwatch_metric_alarm" "standart_monitoring_cpu_scale_out" {
   count = var.create_resource["monitoring"] ? 1 : 0
 
-  alarm_name                = "standarts-monitoring-cpu"
+  alarm_name                = "standart-monitoring-cpu"
   comparison_operator       = var.comparison
   evaluation_periods        = var.evaluation_periods
   metric_name               = var.metric_name[0]
@@ -37,10 +43,15 @@ resource "aws_cloudwatch_metric_alarm" "standarts_monitoring_cpu_scale_out" {
     InstanceId = "${var.module_instance_id}"
   }
   alarm_actions = [var.module_scale_out_id]
+  tags = {
+    Name        = "${var.resource_owner["name"]}-Cloudwatch-Alarm-CPU-Scale-Out"
+    Owner       = "${var.resource_owner["owner"]}"
+    Environment = "${var.resource_owner["Prod_Environment"]}"
+  }
 }
 
 #----------------------------------standart-Monitoring-Network--In-----------------------------------------------------
-resource "aws_cloudwatch_metric_alarm" "standarts_monitoring_network_in" {
+resource "aws_cloudwatch_metric_alarm" "standart_monitoring_network_in" {
   count = var.create_resource["monitoring"] ? 1 : 0
 
   alarm_name          = "High-Network-In"
@@ -56,9 +67,15 @@ resource "aws_cloudwatch_metric_alarm" "standarts_monitoring_network_in" {
   dimensions = {
     InstanceId = "${var.module_instance_id}"
   }
+
+  tags = {
+    Name        = "${var.resource_owner["name"]}-Cloudwatch-Alarm-Network-Scale-In"
+    Owner       = "${var.resource_owner["owner"]}"
+    Environment = "${var.resource_owner["Prod_Environment"]}"
+  }
 }
 #----------------------------------standart-Monitoring-Network--Out-----------------------------------------------------
-resource "aws_cloudwatch_metric_alarm" "standarts_monitoring_network_out" {
+resource "aws_cloudwatch_metric_alarm" "standart_monitoring_network_out" {
   count = var.create_resource["monitoring"] ? 1 : 0
 
   alarm_name          = "High-Network-Out"
@@ -73,5 +90,10 @@ resource "aws_cloudwatch_metric_alarm" "standarts_monitoring_network_out" {
 
   dimensions = {
     InstanceId = "${var.module_instance_id}"
+  }
+  tags = {
+    Name        = "${var.resource_owner["name"]}-Cloudwatch-Alarm-Network-Scale-Out"
+    Owner       = "${var.resource_owner["owner"]}"
+    Environment = "${var.resource_owner["Prod_Environment"]}"
   }
 }

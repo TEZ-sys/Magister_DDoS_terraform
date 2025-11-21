@@ -2,7 +2,7 @@ variable "create_resource" {
   description = "True or false to create a resource"
   type        = map(bool)
   default = {
-    instance     = true
+    instance     = false
     auto_scale   = false
     load_balance = false
     monitoring   = false
@@ -14,18 +14,29 @@ variable "scaleout_capacity" {
   type        = map(number)
   default = {
     min     = 1
-    max   = 3
+    max     = 3
     desired = 2
   }
 }
 variable "availability_zones" {
   description = "Availability zones"
   type        = map(string)
-  default     = {
+  default = {
     az1 = "eu-west-2a"
     az2 = "eu-west-2b"
     az3 = "eu-west-2c"
-    }
+  }
+}
+
+variable "resource_owner" {
+  description = "Owner of resources"
+  type        = map(string)
+  default = {
+    name              = "dfutumai-standart"
+    owner             = "dfutumai"
+    Stage_Environment = "stage"
+    Prod_Environment  = "production"
+  }
 }
 
 
@@ -55,22 +66,22 @@ variable "CIDR" {
   type        = list(any)
 }
 
-variable "standarts_vpc_cidr" {
+variable "standart_vpc_cidr" {
   description = "CIDR for VPC"
   type        = string
 }
 
-variable "standarts_public_subnet" {
+variable "standart_public_subnet" {
   description = "CIDR for public subnet"
   type        = string
 }
 
-variable "standarts_private_subnet" {
+variable "standart_private_subnet" {
   description = "CIDR for private subnet"
   type        = string
 }
 
-variable "standarts_sub_public_subnet" {
+variable "standart_sub_public_subnet" {
   description = "CIDR for sub public subnet"
   type        = string
 }

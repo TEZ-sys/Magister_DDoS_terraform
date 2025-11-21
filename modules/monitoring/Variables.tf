@@ -10,6 +10,10 @@ variable "scale_out_period" {
   description = "Scale out period"
   type        = string
 }
+variable "resource_owner" {
+  description = "Owner of resources"
+  type        = map(string)
+}
 
 variable "scale_in_threshold" {
   description = "Scale in threshold"

@@ -6,6 +6,10 @@ variable "availability_zones" {
   description = "Availability zones"
   type        = map(string)
 }
+variable "resource_owner" {
+  description = "Owner of resources"
+  type        = map(string)
+}
 
 variable "region" {
   description = "AWS London-Region"
@@ -21,22 +25,22 @@ variable "CIDR" {
   type        = list(any)
 }
 
-variable "standarts_vpc_cidr" {
+variable "standart_vpc_cidr" {
   description = "CIDR for VPC"
   type        = string
 }
 
-variable "standarts_public_subnet" {
+variable "standart_public_subnet" {
   description = "CIDR for public subnet"
   type        = string
 }
 
-variable "standarts_private_subnet" {
+variable "standart_private_subnet" {
   description = "CIDR for private subnet"
   type        = string
 }
 
-variable "standarts_sub_public_subnet" {
+variable "standart_sub_public_subnet" {
   description = "CIDR for sub public subnet"
   type        = string
 }

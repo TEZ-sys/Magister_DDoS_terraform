@@ -21,6 +21,10 @@ variable "public_subnet_id" {
   description = "CIDR for public subnet"
   type        = string
 }
+variable "resource_owner" {
+  description = "Owner of resources"
+  type        = map(string)
+}
 
 variable "sub_public_subnet" {
   description = "CIDR for public subnet"

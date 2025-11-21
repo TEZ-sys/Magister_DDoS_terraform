@@ -1,7 +1,7 @@
 #-------------------------------------------Application-load-balancer----------------------------------------------------------
 resource "aws_lb" "alb" {
   count              = var.create_resource["load_balance"] ? 1 : 0
-  name               = "defensive-alb"
+  name               = "standart-alb"
   load_balancer_type = "application"
   internal           = false
   security_groups    = [var.module_alb_security_group]
@@ -9,13 +9,15 @@ resource "aws_lb" "alb" {
 
   enable_deletion_protection = false
   tags = {
-    Name = "defensive-alb"
+    Name        = "${var.resource_owner["name"]}-ALB"
+    Owner       = "${var.resource_owner["owner"]}"
+    Environment = "${var.resource_owner["Prod_Environment"]}"
   }
 }
 
 resource "aws_lb_target_group" "target_group" {
   count       = var.create_resource["load_balance"] ? 1 : 0
-  name        = "defense-target-group"
+  name        = "standart-target-group"
   port        = 80
   protocol    = "HTTP"
   vpc_id      = var.vpc_id
@@ -31,7 +33,9 @@ resource "aws_lb_target_group" "target_group" {
   }
 
   tags = {
-    Name = "defense-target-group"
+    Name        = "${var.resource_owner["name"]}-Target-group"
+    Owner       = "${var.resource_owner["owner"]}"
+    Environment = "${var.resource_owner["Prod_Environment"]}"
   }
 }
 

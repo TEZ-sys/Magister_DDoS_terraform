@@ -19,8 +19,8 @@ output "module_scale_in_id" {
 }
 
 output "module_security_group_standart_id" {
-  value       = aws_security_group.standarts_security_group.id
-  description = "ID of the standarts security group"
+  value       = aws_security_group.standart_security_group.id
+  description = "ID of the standart security group"
 }
 
 output "module_alb_security_group_standart_id" {
