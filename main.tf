@@ -17,6 +17,7 @@ module "network" {
   create_resource             = var.create_resource
   source                      = "./modules/network"
   region                      = var.region
+  availability_zones         = var.availability_zones
   ports                       = var.ports
   CIDR                        = var.CIDR
   standarts_vpc_cidr          = var.standarts_vpc_cidr

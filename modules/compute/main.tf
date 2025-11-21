@@ -2,7 +2,7 @@
 resource "aws_instance" "standart_instance" {
   count                  = var.create_resource["instance"] ? 1 : 0
   vpc_security_group_ids = [aws_security_group.standarts_security_group.id]
-  ami                    = var.ami
+  ami                    = var.ami != "" ? var.ami : data.aws_ami.latest_ubuntu.id
   instance_type          = var.inst_type
   subnet_id              = var.public_subnet_id
 
@@ -14,11 +14,11 @@ resource "aws_instance" "standart_instance" {
 }
 
 
-#-----------------------------------------Attack-instance---------------------------------------
+#-----------------------------------------Sub-instance---------------------------------------
 resource "aws_instance" "sub_instance" {
   count                  = var.create_resource["instance"] ? 1 : 0
   vpc_security_group_ids = [aws_security_group.standarts_security_group.id]
-  ami                    = var.ami
+  ami                    = var.ami != "" ? var.ami : data.aws_ami.latest_ubuntu.id
   instance_type          = var.inst_type
   subnet_id              = var.sub_public_subnet
 
@@ -33,7 +33,7 @@ resource "aws_instance" "sub_instance" {
 resource "aws_launch_template" "standart_launch_template" {
   count         = var.create_resource["auto_scale"] ? 1 : 0
   name_prefix   = "Default-London-instance"
-  image_id      = var.ami
+  image_id      = var.ami != "" ? var.ami : data.aws_ami.latest_ubuntu.id
   instance_type = var.inst_type
   network_interfaces {
     security_groups = [aws_security_group.standarts_security_group.id]

@@ -1,7 +1,6 @@
 #---------------------------------standarts-VPC----------------------------------
 resource "aws_vpc" "standarts_vpc" {
 
-
   cidr_block       = var.standarts_vpc_cidr
   instance_tenancy = "default"
   tags             = { Name = "standart_VPC" }
@@ -20,7 +19,7 @@ resource "aws_subnet" "standarts_public_subnet" {
   vpc_id                  = aws_vpc.standarts_vpc.id
   cidr_block              = var.standarts_public_subnet
   map_public_ip_on_launch = true
-  availability_zone       = var.region
+  availability_zone       = var.availability_zones["az1"]
   tags                    = { Name = "standarts_Public_subnet" }
 }
 
@@ -29,7 +28,7 @@ resource "aws_subnet" "standarts_private_subnet" {
 
   vpc_id            = aws_vpc.standarts_vpc.id
   cidr_block        = var.standarts_private_subnet
-  availability_zone = var.region
+  availability_zone       = var.availability_zones["az1"]
   tags              = { Name = "standarts_Private_subnet" }
 }
 
@@ -75,7 +74,7 @@ resource "aws_subnet" "standarts_sub_public_subnet" {
   vpc_id                  = aws_vpc.standarts_vpc.id
   cidr_block              = var.standarts_sub_public_subnet
   map_public_ip_on_launch = true
-  availability_zone       = "eu-west-2b" # Adjust as needed
+  availability_zone       = var.availability_zones["az2"]
   tags                    = { Name = "sub_standarts_Public_subnet" }
 }
 

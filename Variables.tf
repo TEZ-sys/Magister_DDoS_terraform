@@ -18,6 +18,15 @@ variable "scaleout_capacity" {
     desired = 2
   }
 }
+variable "availability_zones" {
+  description = "Availability zones"
+  type        = map(string)
+  default     = {
+    az1 = "eu-west-2a"
+    az2 = "eu-west-2b"
+    az3 = "eu-west-2c"
+    }
+}
 
 
 variable "region" {

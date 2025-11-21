@@ -2,6 +2,10 @@ variable "create_resource" {
   description = "Map of resources to create"
   type        = map(bool)
 }
+variable "availability_zones" {
+  description = "Availability zones"
+  type        = map(string)
+}
 
 variable "region" {
   description = "AWS London-Region"
