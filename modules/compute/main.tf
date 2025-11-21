@@ -1,18 +1,11 @@
 #-----------------------------------------Defence-instance---------------------------------------
 resource "aws_instance" "defender_instance" {
   count                  = var.create_resource["instance"] ? 1 : 0
-  vpc_security_group_ids = [aws_security_groups.defenders_security_group.id]
+  vpc_security_group_ids = [aws_security_group.defenders_security_group.id]
   ami                    = var.ami
   instance_type          = var.inst_type
   subnet_id              = var.public_subnet_id
-  user_data = base64encode(<<-EOT
-   #!/bin/bash
-    apt-get update -y
-    apt-get install nginx -y
-    ufw allow 80
-    apt-get install slowhttptest -y
-EOT
-  )
+
   tags = {
     Name = "Defender"
   }
@@ -26,21 +19,6 @@ resource "aws_instance" "atatckers_instance" {
   ami                    = var.ami
   instance_type          = var.inst_type
   subnet_id              = var.sub_public_subnet
-
-  user_data = <<-EOT
-    #!/bin/bash
-    sudo apt-get update
-    sudo apt-get install slowhttptest -y
-    sudo apt-get install -y hping3
-    TARGET_IP="${aws_instance.defender_instance.public_ip}" # Dynamically fetch defender's IP
-    echo "Target IP: $TARGET_IP" > /home/ubuntu/target_ip.txt
-   
-    while true; do 
-    sudo slowhttptest -H -u http://$TARGET_IP -t GET -c 100 -r 30 -p 20 -l 3600 
-    sleep 90
-    done
-    #ping $TARGET_IP -S 65000 -i 0.0000001
-  EOT
 
   tags = {
     Name        = "Attacker_instance_number${count.index + 1}"
@@ -74,7 +52,7 @@ resource "aws_autoscaling_group" "defence_asg" {
   vpc_zone_identifier = [var.sub_public_subnet]
 
   launch_template {
-    id = aws_launch_template.defence_launch_template.id
+    id = aws_launch_template.defence_launch_template[0].id
   }
 }
 
@@ -84,7 +62,7 @@ resource "aws_autoscaling_policy" "scale_out" {
   scaling_adjustment     = 1
   adjustment_type        = "ChangeInCapacity"
   cooldown               = 50
-  autoscaling_group_name = aws_autoscaling_group.defence_asg.name
+  autoscaling_group_name = aws_autoscaling_group.defence_asg[count.index].name
 }
 
 resource "aws_autoscaling_policy" "scale_in" {
@@ -93,12 +71,11 @@ resource "aws_autoscaling_policy" "scale_in" {
   scaling_adjustment     = -1
   adjustment_type        = "ChangeInCapacity"
   cooldown               = 100
-  autoscaling_group_name = aws_autoscaling_group.defence_asg.name
+  autoscaling_group_name = aws_autoscaling_group.defence_asg[count.index].name
 }
 
 #---------------------------------aws_security_group-----------------------------
 resource "aws_security_group" "defenders_security_group" {
-  count       = var.create_resource["instance"] ? 1 : 0
   name_prefix = "Security-Group for Defenders"
 
   vpc_id = var.vpc_id

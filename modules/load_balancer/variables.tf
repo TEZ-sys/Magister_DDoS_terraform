@@ -30,6 +30,7 @@ variable "sub_public_subnet" {
 variable "module_instance_id" {
   description = "Instance_id of defender instance"
   type        = string
+  default     = null
 }
 
 variable "module_alb_security_group" {

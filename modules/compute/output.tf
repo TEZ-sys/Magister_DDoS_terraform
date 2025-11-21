@@ -1,10 +1,10 @@
 output "module_defender_instance_id" {
-  value       = var.create_resource["compute"] ? aws_instance.defender_instance[0].id : null
+  value       = var.create_resource["instance"] ? aws_instance.defender_instance[0].id : null
   description = "ID of the defender instance"
 }
 
 output "module_defender_instance_ip" {
-  value       = var.create_resource["compute"] ? aws_instance.defender_instance[0].public_ip : null
+  value       = var.create_resource["instance"] ? aws_instance.defender_instance[0].public_ip : null
   description = "Public IP of the defender instance"
 }
 

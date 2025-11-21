@@ -10,7 +10,7 @@ terraform {
 #-----------------------------------provider_"aws" ------------------------------
 provider "aws" {
   region  = var.region
-  profile = "Terraform-Diplom"
+  profile = "Terraform-AWS"
 }
 
 module "network" {
@@ -34,8 +34,8 @@ module "compute" {
   ports             = var.ports
   CIDR              = var.CIDR
   public_subnet_id  = module.network.module_defenders_public_subnet_id
-  sub_public_subnet = module.network.module_sub_defenders_public_subnet_id
-  vpc_id            = module.network.module_vpc_id 
+  sub_public_subnet = module.network.module_defenders_sub_public_subnet_id
+  vpc_id            = module.network.module_vpc_id
 }
 
 module "load_balancer" {
@@ -45,8 +45,8 @@ module "load_balancer" {
   ports                     = var.ports
   module_instance_id        = module.compute.module_defender_instance_id
   public_subnet_id          = module.network.module_defenders_public_subnet_id
-  sub_public_subnet         = module.network.module_sub_defenders_public_subnet_id
-  vpc_id                    = module.network.module_vpc_id 
+  sub_public_subnet         = module.network.module_defenders_sub_public_subnet_id
+  vpc_id                    = module.network.module_vpc_id
   module_alb_security_group = module.compute.module_alb_security_group_defence_id
 }
 
@@ -64,6 +64,6 @@ module "monitoring" {
   metric_name         = var.metric_name
   comparison          = var.comparison
   module_instance_id  = module.compute.module_defender_instance_id
-  module_scale_out_id = module.compute.module_scale_out_id 
-  module_scale_in_id  = module.compute.module_scale_in_id 
+  module_scale_out_id = module.compute.module_scale_out_id
+  module_scale_in_id  = module.compute.module_scale_in_id
 }
