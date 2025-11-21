@@ -5,43 +5,13 @@ resource "aws_instance" "standart_instance" {
   ami                    = var.ami != "" ? var.ami : data.aws_ami.latest_ubuntu.id
   instance_type          = var.inst_type
   subnet_id              = var.public_subnet_id
-  user_data = base64encode(<<-EOF
-#!/bin/bash
+  iam_instance_profile   = var.monitoring_profile
+  user_data = templatefile("${path.root}/script.sh",
+    {
+      environment = var.resource_owner["Prod_Environment"]
+      region      = var.region
+  })
 
-# Update packages
-apt-get update -y
-
-# Install AWS CLI
-apt-get install -y awscli
-
-# Create script directory
-mkdir -p /usr/local/bin/
-
-# Create disk publishing script
-cat << 'EOT' > /usr/local/bin/publish_disk_metrics.sh
-#!/bin/bash
-
-NAMESPACE="Custom/System"
-ENVIRONMENT="prod"
-HOSTNAME=$(hostname)
-
-DISK_USED=$(df / | tail -1 | awk '{print $5}' | tr -d '%')
-
-aws cloudwatch put-metric-data \
-  --namespace "$NAMESPACE" \
-  --metric-name "DiskUsageRootPercent" \
-  --value "$DISK_USED" \
-  --unit Percent \
-  --dimensions Environment=$ENVIRONMENT,Host=$HOSTNAME
-EOT
-
-chmod +x /usr/local/bin/publish_disk_metrics.sh
-
-# Add cron job to run every 1 minute
-(crontab -l 2>/dev/null; echo "*/1 * * * * /usr/local/bin/publish_disk_metrics.sh") | crontab -
-
-EOF
-  )
   tags = {
     Name        = "${var.resource_owner["name"]}-instance"
     Owner       = "${var.resource_owner["owner"]}"

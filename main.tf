@@ -46,6 +46,7 @@ module "compute" {
   vpc_id             = module.network.module_vpc_id
   scale_out_capacity = var.scaleout_capacity
   resource_owner     = var.resource_owner
+  monitoring_profile = module.iam.module_iam_monitoring_profile
 }
 
 module "load_balancer" {

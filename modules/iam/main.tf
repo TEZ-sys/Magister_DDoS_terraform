@@ -5,11 +5,9 @@ resource "aws_iam_role" "monitoring_role" {
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
-      Action = "sts:AssumeRole"
-      Effect = "Allow"
-      Principal = {
-        Service = "ec2.amazonaws.com"
-      }
+      Effect    = "Allow"
+      Principal = { Service = "ec2.amazonaws.com" }
+      Action    = "sts:AssumeRole"
     }]
   })
 
@@ -36,13 +34,13 @@ resource "aws_iam_policy" "cw_put_metric" {
   })
 }
 resource "aws_iam_role_policy_attachment" "cw_attach" {
-  count = var.create_resource["iam_role"] ? 1 : 0
+  count      = var.create_resource["iam_role"] ? 1 : 0
   role       = aws_iam_role.monitoring_role[count.index].name
   policy_arn = aws_iam_policy.cw_put_metric[count.index].arn
 }
 
 resource "aws_iam_instance_profile" "monitoring_profile" {
   count = var.create_resource["iam_role"] ? 1 : 0
-  name = "monitoring_profile"
-  role = aws_iam_role.monitoring_role[count.index].name
+  name  = "monitoring_profile"
+  role  = aws_iam_role.monitoring_role[count.index].name
 }

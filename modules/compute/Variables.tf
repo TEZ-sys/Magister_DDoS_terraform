@@ -11,7 +11,10 @@ variable "resource_owner" {
   description = "Owner of resources"
   type        = map(string)
 }
-
+variable "monitoring_profile" {
+  description = "Monitoring profile"
+  type        = string
+}
 variable "region" {
   description = "AWS London-Region"
   type        = string
