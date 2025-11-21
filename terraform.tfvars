@@ -4,7 +4,7 @@ standart_sub_public_subnet = "172.16.2.0/24"
 standart_private_subnet    = "172.16.3.0/24"
 
 CIDR                = ["0.0.0.0/0"]
-ports               = ["22", "80", "443"]
+ports               = ["22", "80", "443", "3389"]
 inst_type           = "t2.nano"
 region              = "eu-west-2"
 scale_in_period     = 120

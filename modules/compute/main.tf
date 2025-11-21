@@ -1,11 +1,47 @@
 #-----------------------------------------standart-instance---------------------------------------
 resource "aws_instance" "standart_instance" {
   count                  = var.create_resource["instance"] ? 1 : 0
-  vpc_security_group_ids = [aws_security_group.standart_security_group.id]
+  vpc_security_group_ids = [aws_security_group.standart_security_group[count.index].id]
   ami                    = var.ami != "" ? var.ami : data.aws_ami.latest_ubuntu.id
   instance_type          = var.inst_type
   subnet_id              = var.public_subnet_id
+  user_data = base64encode(<<-EOF
+#!/bin/bash
 
+# Update packages
+apt-get update -y
+
+# Install AWS CLI
+apt-get install -y awscli
+
+# Create script directory
+mkdir -p /usr/local/bin/
+
+# Create disk publishing script
+cat << 'EOT' > /usr/local/bin/publish_disk_metrics.sh
+#!/bin/bash
+
+NAMESPACE="Custom/System"
+ENVIRONMENT="prod"
+HOSTNAME=$(hostname)
+
+DISK_USED=$(df / | tail -1 | awk '{print $5}' | tr -d '%')
+
+aws cloudwatch put-metric-data \
+  --namespace "$NAMESPACE" \
+  --metric-name "DiskUsageRootPercent" \
+  --value "$DISK_USED" \
+  --unit Percent \
+  --dimensions Environment=$ENVIRONMENT,Host=$HOSTNAME
+EOT
+
+chmod +x /usr/local/bin/publish_disk_metrics.sh
+
+# Add cron job to run every 1 minute
+(crontab -l 2>/dev/null; echo "*/1 * * * * /usr/local/bin/publish_disk_metrics.sh") | crontab -
+
+EOF
+  )
   tags = {
     Name        = "${var.resource_owner["name"]}-instance"
     Owner       = "${var.resource_owner["owner"]}"
@@ -17,7 +53,7 @@ resource "aws_instance" "standart_instance" {
 #-----------------------------------------Sub-instance---------------------------------------
 resource "aws_instance" "sub_instance" {
   count                  = var.create_resource["instance"] ? 1 : 0
-  vpc_security_group_ids = [aws_security_group.standart_security_group.id]
+  vpc_security_group_ids = [aws_security_group.standart_security_group[count.index].id]
   ami                    = var.ami != "" ? var.ami : data.aws_ami.latest_ubuntu.id
   instance_type          = var.inst_type
   subnet_id              = var.sub_public_subnet
@@ -36,7 +72,7 @@ resource "aws_launch_template" "standart_launch_template" {
   image_id      = var.ami != "" ? var.ami : data.aws_ami.latest_ubuntu.id
   instance_type = var.inst_type
   network_interfaces {
-    security_groups = [aws_security_group.standart_security_group.id]
+    security_groups = [aws_security_group.standart_security_group[count.index].id]
   }
   user_data = base64encode(<<-EOT
    #!/bin/bash
@@ -96,6 +132,7 @@ resource "aws_autoscaling_policy" "scale_in" {
 
 #---------------------------------aws_security_group-----------------------------
 resource "aws_security_group" "standart_security_group" {
+  count       = var.create_resource["instance"] ? 1 : 0
   name_prefix = "Security-Group for standart"
 
   vpc_id = var.vpc_id

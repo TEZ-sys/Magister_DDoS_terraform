@@ -13,6 +13,8 @@ provider "aws" {
   profile = "Terraform-AWS"
 }
 
+
+#--------------------------------------Modules-----------------------------------
 module "network" {
   create_resource            = var.create_resource
   source                     = "./modules/network"
@@ -27,7 +29,11 @@ module "network" {
   subnet_id                  = module.network.module_standart_public_subnet_id
   resource_owner             = var.resource_owner
 }
-
+module "iam" {
+  create_resource = var.create_resource
+  source          = "./modules/iam"
+  resource_owner  = var.resource_owner
+}
 module "compute" {
   create_resource    = var.create_resource
   source             = "./modules/compute"

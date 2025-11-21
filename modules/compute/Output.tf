@@ -19,7 +19,7 @@ output "module_scale_in_id" {
 }
 
 output "module_security_group_standart_id" {
-  value       = aws_security_group.standart_security_group.id
+  value       = var.create_resource["instance"] ? aws_security_group.standart_security_group[0].id : null
   description = "ID of the standart security group"
 }
 

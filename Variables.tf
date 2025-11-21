@@ -2,10 +2,12 @@ variable "create_resource" {
   description = "True or false to create a resource"
   type        = map(bool)
   default = {
-    instance     = false
+    instance     = true
     auto_scale   = false
     load_balance = false
     monitoring   = false
+    network      = true
+    iam_role     = true
   }
 }
 
