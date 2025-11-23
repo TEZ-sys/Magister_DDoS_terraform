@@ -118,7 +118,7 @@ resource "aws_cloudwatch_metric_alarm" "Cloud_watch_and_sns" {
   alarm_actions = [var.sns_topic_arn]
 
   tags = {
-    Name        = "${var.resource_owner["name"]}-Cloudwatch-Alarm-CPU-Scale-In"
+    Name        = "${var.resource_owner["name"]}-Cloudwatch-Alarm-CPU-SNS"
     Owner       = "${var.resource_owner["owner"]}"
     Environment = "${var.resource_owner["Prod_Environment"]}"
   }
