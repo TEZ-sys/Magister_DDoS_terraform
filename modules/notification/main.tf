@@ -3,7 +3,7 @@ resource "aws_sns_topic" "my_topic" {
   name  = "Nebo-topic"
 
   tags = {
-    Name        = "${var.resource_owner["name"]}-VPC"
+    Name        = "${var.resource_owner["name"]}-SNS-Topic"
     Owner       = var.resource_owner["owner"]
     Environment = var.resource_owner["Prod_Environment"]
   }
