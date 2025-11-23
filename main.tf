@@ -88,13 +88,14 @@ module "monitoring" {
   module_scale_out_id = module.compute.module_scale_out_id
   module_scale_in_id  = module.compute.module_scale_in_id
   resource_owner      = var.resource_owner
-  sns_topic_arn       = module.notification.module_output_sns_topic_arn
+  sns_alert_topic_arn = module.notification.module_output_sns_alert_topic_arn
+  sns_ok_topic_arn    = module.notification.module_output_sns_ok_topic_arn
 }
 
 module "logging" {
   source          = "./modules/logging"
   create_resource = var.create_resource
-  sns_topic_arn   = module.notification.module_output_sns_topic_arn
+  sns_topic_arn   = module.notification.module_output_sns_alert_topic_arn
   resource_owner  = var.resource_owner
   retention_days  = var.retention_days
 }

@@ -11,8 +11,13 @@ variable "scale_out_period" {
   type        = string
 }
 
-variable "sns_topic_arn" {
-  description = "SNS topic ARN"
+variable "sns_alert_topic_arn" {
+  description = "SNS arn topic ARN"
+  type        = string
+}
+
+variable "sns_ok_topic_arn" {
+  description = "SNS ok topic ARN"
   type        = string
 }
 
