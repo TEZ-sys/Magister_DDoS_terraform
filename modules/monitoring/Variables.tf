@@ -10,6 +10,12 @@ variable "scale_out_period" {
   description = "Scale out period"
   type        = string
 }
+
+variable "sns_topic_arn" {
+  description = "SNS topic ARN"
+  type        = string
+}
+
 variable "resource_owner" {
   description = "Owner of resources"
   type        = map(string)

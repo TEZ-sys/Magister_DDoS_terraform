@@ -97,3 +97,29 @@ resource "aws_cloudwatch_metric_alarm" "standart_monitoring_network_out" {
     Environment = "${var.resource_owner["Prod_Environment"]}"
   }
 }
+
+#----------------------------------CloudWatch+SNS-----------------------------------------------------
+resource "aws_cloudwatch_metric_alarm" "Cloud_watch_and_sns" {
+  count                     = var.create_resource["sns_topic"] ? 1 : 0
+  alarm_name                = "standart-monitoring-cpu"
+  comparison_operator       = var.comparison
+  evaluation_periods        = var.evaluation_periods
+  metric_name               = var.metric_name[0]
+  namespace                 = var.name_space
+  period                    = var.scale_in_period
+  statistic                 = "Average"
+  threshold                 = var.scale_in_threshold
+  alarm_description         = "This metric monitors ec2 cpu utilization"
+  insufficient_data_actions = []
+
+  dimensions = {
+    InstanceId = "${var.module_instance_id}"
+  }
+  alarm_actions = [var.sns_topic_arn]
+
+  tags = {
+    Name        = "${var.resource_owner["name"]}-Cloudwatch-Alarm-CPU-Scale-In"
+    Owner       = "${var.resource_owner["owner"]}"
+    Environment = "${var.resource_owner["Prod_Environment"]}"
+  }
+}

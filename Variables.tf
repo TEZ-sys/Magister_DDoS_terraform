@@ -6,8 +6,10 @@ variable "create_resource" {
     auto_scale   = false
     load_balance = false
     monitoring   = false
-    network      = true
-    iam_role     = true
+    network      = false
+    iam_role     = false
+    sns_topic    = true
+    logging      = true
   }
 }
 
@@ -40,7 +42,16 @@ variable "resource_owner" {
     Prod_Environment  = "production"
   }
 }
+variable "retention_days" {
+  description = "Retention days for log group"
+  type        = number
+  default     = 1
+}
 
+variable "email_address" {
+  description = "Email address for sns"
+  type        = string
+}
 
 variable "region" {
   description = "AWS London-Region"

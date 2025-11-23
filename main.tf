@@ -16,8 +16,8 @@ provider "aws" {
 
 #--------------------------------------Modules-----------------------------------
 module "network" {
-  create_resource            = var.create_resource
   source                     = "./modules/network"
+  create_resource            = var.create_resource
   region                     = var.region
   availability_zones         = var.availability_zones
   ports                      = var.ports
@@ -29,14 +29,23 @@ module "network" {
   subnet_id                  = module.network.module_standart_public_subnet_id
   resource_owner             = var.resource_owner
 }
-module "iam" {
+
+module "notification" {
+  source          = "./modules/notification"
+  resource_owner  = var.resource_owner
   create_resource = var.create_resource
+  email_address   = var.email_address
+}
+
+module "iam" {
   source          = "./modules/iam"
+  create_resource = var.create_resource
   resource_owner  = var.resource_owner
 }
+
 module "compute" {
-  create_resource    = var.create_resource
   source             = "./modules/compute"
+  create_resource    = var.create_resource
   region             = var.region
   inst_type          = var.inst_type
   ports              = var.ports
@@ -50,8 +59,8 @@ module "compute" {
 }
 
 module "load_balancer" {
-  create_resource           = var.create_resource
   source                    = "./modules/load_balancer"
+  create_resource           = var.create_resource
   region                    = var.region
   ports                     = var.ports
   module_instance_id        = module.compute.module_standart_instance_id
@@ -63,8 +72,8 @@ module "load_balancer" {
 }
 
 module "monitoring" {
-  create_resource     = var.create_resource
   source              = "./modules/monitoring"
+  create_resource     = var.create_resource
   name_space          = var.name_space
   scale_in_period     = var.scale_in_period
   scale_in_threshold  = var.scale_in_threshold
@@ -79,4 +88,13 @@ module "monitoring" {
   module_scale_out_id = module.compute.module_scale_out_id
   module_scale_in_id  = module.compute.module_scale_in_id
   resource_owner      = var.resource_owner
+  sns_topic_arn       = module.notification.module_output_sns_topic_arn
+}
+
+module "logging" {
+  source          = "./modules/logging"
+  create_resource = var.create_resource
+  sns_topic_arn   = module.notification.module_output_sns_topic_arn
+  resource_owner  = var.resource_owner
+  retention_days  = var.retention_days
 }
