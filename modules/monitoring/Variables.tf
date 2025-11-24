@@ -80,3 +80,7 @@ variable "module_scale_in_id" {
   description = "Scale in id"
   type        = string
 }
+variable "environment" {
+  description = "Production or Stage environment"
+  type        = string
+}

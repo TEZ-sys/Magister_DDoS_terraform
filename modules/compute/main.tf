@@ -1,22 +1,29 @@
+locals {
+  merged_tags = merge(
+    var.resource_owner,
+    {
+      Environment = var.environment
+    }
+  )
+}
+
 #-----------------------------------------standart-instance---------------------------------------
 resource "aws_instance" "standart_instance" {
   count                  = var.create_resource["instance"] ? 1 : 0
   vpc_security_group_ids = [aws_security_group.standart_security_group[count.index].id]
-  ami                    = var.ami != "" ? var.ami : data.aws_ami.latest_ubuntu.id
+  ami                    = var.ami
   instance_type          = var.inst_type
   subnet_id              = var.public_subnet_id
   iam_instance_profile   = var.monitoring_profile
   user_data = templatefile("${path.root}/script.sh",
     {
-      environment = var.resource_owner["Prod_Environment"]
+      environment = var.environment
       region      = var.region
   })
-
-  tags = {
-    Name        = "${var.resource_owner["name"]}-instance"
-    Owner       = "${var.resource_owner["owner"]}"
-    Environment = "${var.resource_owner["Prod_Environment"]}"
-  }
+  key_name = var.key_name
+  tags = merge(var.resource_owner, {
+    Environment = var.environment == "production" ? "production" : "stage"
+  }, )
 }
 
 
@@ -24,22 +31,20 @@ resource "aws_instance" "standart_instance" {
 resource "aws_instance" "sub_instance" {
   count                  = var.create_resource["instance"] ? 1 : 0
   vpc_security_group_ids = [aws_security_group.standart_security_group[count.index].id]
-  ami                    = var.ami != "" ? var.ami : data.aws_ami.latest_ubuntu.id
+  ami                    = var.ami
   instance_type          = var.inst_type
   subnet_id              = var.sub_public_subnet
 
-  tags = {
-    Name        = "${var.resource_owner["name"]}-instance"
-    Owner       = "${var.resource_owner["owner"]}"
-    Environment = "${var.resource_owner["Stage_Environment"]}"
-  }
+  tags = merge(var.resource_owner, {
+    Environment = var.environment == "production" ? "production" : "stage"
+  }, )
 }
 
 #-----------------------------------------Auto-scaling-group---------------------------------------
 resource "aws_launch_template" "standart_launch_template" {
   count         = var.create_resource["auto_scale"] ? 1 : 0
   name_prefix   = "Default-London-instance"
-  image_id      = var.ami != "" ? var.ami : data.aws_ami.latest_ubuntu.id
+  image_id      = var.ami
   instance_type = var.inst_type
   network_interfaces {
     security_groups = [aws_security_group.standart_security_group[count.index].id]
@@ -51,12 +56,11 @@ resource "aws_launch_template" "standart_launch_template" {
     ufw allow 80
 EOT
   )
-  tags = {
-    Name        = "${var.resource_owner["name"]}-Launch-template"
-    Owner       = "${var.resource_owner["owner"]}"
-    Environment = "${var.resource_owner["Prod_Environment"]}"
-  }
+  tags = merge(var.resource_owner, {
+    Environment = var.environment == "production" ? "production" : "stage"
+  }, )
 }
+
 
 resource "aws_autoscaling_group" "standart_asg" {
   count               = var.create_resource["auto_scale"] ? 1 : 0
@@ -68,18 +72,13 @@ resource "aws_autoscaling_group" "standart_asg" {
   launch_template {
     id = aws_launch_template.standart_launch_template[0].id
   }
-  tags = [{
-    key   = "Name"
-    value = "${var.resource_owner["name"]}-ASG"
-    },
-    {
-      key   = "Owner"
-      value = "${var.resource_owner["owner"]}"
-    },
-    {
-      key   = "Environment"
-      value = "${var.resource_owner["Prod_Environment"]}"
-  }]
+  tags = [
+    for key, value in local.merged_tags : {
+      key                 = key
+      value               = value
+      propagate_at_launch = true
+    }
+  ]
 }
 
 resource "aws_autoscaling_policy" "scale_out" {
@@ -129,11 +128,9 @@ resource "aws_security_group" "standart_security_group" {
     cidr_blocks = var.CIDR
   }
 
-  tags = {
-    Name        = "${var.resource_owner["name"]}-Security-Group"
-    Owner       = "${var.resource_owner["owner"]}"
-    Environment = "${var.resource_owner["Prod_Environment"]}"
-  }
+  tags = merge(var.resource_owner, {
+    Environment = var.environment == "production" ? "production" : "stage"
+  }, )
 }
 
 
@@ -165,9 +162,7 @@ resource "aws_security_group" "alb_sg" {
     cidr_blocks = var.CIDR
   }
 
-  tags = {
-    Name        = "${var.resource_owner["name"]}-ALB-Security-Group"
-    Owner       = "${var.resource_owner["owner"]}"
-    Environment = "${var.resource_owner["Prod_Environment"]}"
-  }
+  tags = merge(var.resource_owner, {
+    Environment = var.environment == "production" ? "production" : "stage"
+  }, )
 }

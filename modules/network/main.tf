@@ -3,22 +3,22 @@ resource "aws_vpc" "standart_vpc" {
   count            = var.create_resource["network"] ? 1 : 0
   cidr_block       = var.standart_vpc_cidr
   instance_tenancy = "default"
-  tags = {
-    Name        = "${var.resource_owner["name"]}-VPC"
-    Owner       = var.resource_owner["owner"]
-    Environment = var.resource_owner["Prod_Environment"]
-  }
+  tags = merge(var.resource_owner, {
+    Environment = var.environment == "production" ? "production" : "stage"
+
+
+  }, )
 }
 
 #---------------------------------standart-IGW----------------------------------
 resource "aws_internet_gateway" "standart_IGW" {
   count  = var.create_resource["network"] ? 1 : 0
   vpc_id = aws_vpc.standart_vpc[count.index].id
-  tags = {
-    Name        = "${var.resource_owner["name"]}-IGW"
-    Owner       = var.resource_owner["owner"]
-    Environment = var.resource_owner["Prod_Environment"]
-  }
+  tags = merge(var.resource_owner, {
+    Environment = var.environment == "production" ? "production" : "stage"
+
+
+  }, )
 }
 
 #---------------------------------Public Subnet---------------------------------
@@ -28,11 +28,11 @@ resource "aws_subnet" "standart_public_subnet" {
   cidr_block              = var.standart_public_subnet
   map_public_ip_on_launch = true
   availability_zone       = var.availability_zones["az1"]
-  tags = {
-    Name        = "${var.resource_owner["name"]}-Pub-Subnet"
-    Owner       = var.resource_owner["owner"]
-    Environment = var.resource_owner["Prod_Environment"]
-  }
+  tags = merge(var.resource_owner, {
+    Environment = var.environment == "production" ? "production" : "stage"
+
+
+  }, )
 }
 
 #---------------------------------Private Subnet---------------------------------
@@ -41,11 +41,11 @@ resource "aws_subnet" "standart_private_subnet" {
   vpc_id            = aws_vpc.standart_vpc[count.index].id
   cidr_block        = var.standart_private_subnet
   availability_zone = var.availability_zones["az1"]
-  tags = {
-    Name        = "${var.resource_owner["name"]}-Priv-Subnet"
-    Owner       = var.resource_owner["owner"]
-    Environment = var.resource_owner["Prod_Environment"]
-  }
+  tags = merge(var.resource_owner, {
+    Environment = var.environment == "production" ? "production" : "stage"
+
+
+  }, )
 }
 
 #------------------------------------Public Route Table--------------------------
@@ -56,11 +56,11 @@ resource "aws_route_table" "standart_PublicRT" {
     cidr_block = "0.0.0.0/0"
     gateway_id = aws_internet_gateway.standart_IGW[count.index].id
   }
-  tags = {
-    Name        = "${var.resource_owner["name"]}-PubRT"
-    Owner       = var.resource_owner["owner"]
-    Environment = var.resource_owner["Prod_Environment"]
-  }
+  tags = merge(var.resource_owner, {
+    Environment = var.environment == "production" ? "production" : "stage"
+
+
+  }, )
 }
 
 #------------------------------------Private Route Table-------------------------
@@ -71,11 +71,11 @@ resource "aws_route_table" "standart_PrivateRT" {
     cidr_block     = "0.0.0.0/0"
     nat_gateway_id = aws_nat_gateway.standart_NATgw[count.index].id
   }
-  tags = {
-    Name        = "${var.resource_owner["name"]}-PrvRT"
-    Owner       = var.resource_owner["owner"]
-    Environment = var.resource_owner["Prod_Environment"]
-  }
+  tags = merge(var.resource_owner, {
+    Environment = var.environment == "production" ? "production" : "stage"
+
+
+  }, )
 }
 
 #--------------------------------Public Route Table Association------------------
@@ -99,11 +99,11 @@ resource "aws_subnet" "standart_sub_public_subnet" {
   cidr_block              = var.standart_sub_public_subnet
   map_public_ip_on_launch = true
   availability_zone       = var.availability_zones["az2"]
-  tags = {
-    Name        = "${var.resource_owner["name"]}-Sub-Pub-Subnet"
-    Owner       = var.resource_owner["owner"]
-    Environment = var.resource_owner["Prod_Environment"]
-  }
+  tags = merge(var.resource_owner, {
+    Environment = var.environment == "production" ? "production" : "stage"
+
+
+  }, )
 }
 
 #------------------------------------sub_Public Route Table--------------------------
@@ -114,11 +114,11 @@ resource "aws_route_table" "sub_standart_PublicRT" {
     cidr_block = "0.0.0.0/0"
     gateway_id = aws_internet_gateway.standart_IGW[count.index].id
   }
-  tags = {
-    Name        = "${var.resource_owner["name"]}-Sub-PubRT"
-    Owner       = var.resource_owner["owner"]
-    Environment = var.resource_owner["Prod_Environment"]
-  }
+  tags = merge(var.resource_owner, {
+    Environment = var.environment == "production" ? "production" : "stage"
+
+
+  }, )
 }
 
 #--------------------------------Public Route Table Association------------------
@@ -131,11 +131,11 @@ resource "aws_route_table_association" "sub_standart_PublicRTassociation" {
 #-------------------------------------Elastic IP---------------------------------
 resource "aws_eip" "standart_nat_eip" {
   count = var.create_resource["network"] ? 1 : 0
-  tags = {
-    Name        = "${var.resource_owner["name"]}-NAT-EIP"
-    Owner       = var.resource_owner["owner"]
-    Environment = var.resource_owner["Stage_Environment"]
-  }
+  tags = merge(var.resource_owner, {
+    Environment = var.environment == "production" ? "production" : "stage"
+
+
+  }, )
 }
 
 #--------------------------------NAT Gateway-------------------------------------
@@ -143,9 +143,9 @@ resource "aws_nat_gateway" "standart_NATgw" {
   count         = var.create_resource["network"] ? 1 : 0
   allocation_id = aws_eip.standart_nat_eip[count.index].id
   subnet_id     = aws_subnet.standart_public_subnet[count.index].id
-  tags = {
-    Name        = "${var.resource_owner["name"]}-NAT-GW"
-    Owner       = var.resource_owner["owner"]
-    Environment = var.resource_owner["Stage_Environment"]
-  }
+  tags = merge(var.resource_owner, {
+    Environment = var.environment == "production" ? "production" : "stage"
+
+
+  }, )
 }

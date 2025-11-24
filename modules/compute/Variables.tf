@@ -11,6 +11,11 @@ variable "resource_owner" {
   description = "Owner of resources"
   type        = map(string)
 }
+
+variable "environment" {
+  description = "Production or Stage environment"
+  type        = string
+}
 variable "monitoring_profile" {
   description = "Monitoring profile"
   type        = string
@@ -57,13 +62,7 @@ variable "vpc_id" {
   type        = string
 }
 
-data "aws_availability_zones" "all" {}
-
-data "aws_ami" "latest_ubuntu" {
-  owners      = ["099720109477"]
-  most_recent = true
-  filter {
-    name   = "name"
-    values = ["ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-*"]
-  }
+variable "key_name" {
+  description = "Key name for EC2 instances"
+  type        = string
 }

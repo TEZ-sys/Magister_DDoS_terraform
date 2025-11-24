@@ -10,8 +10,11 @@ terraform {
 #-----------------------------------provider_"aws" ------------------------------
 provider "aws" {
   region  = var.region
-  profile = "Terraform-AWS"
+  profile = var.profile
 }
+#TODO deploy tf state to backend s3
+#Deploy S3 for CDN with HTML
+
 
 
 #--------------------------------------Modules-----------------------------------
@@ -28,6 +31,7 @@ module "network" {
   standart_private_subnet    = var.standart_private_subnet
   subnet_id                  = module.network.module_standart_public_subnet_id
   resource_owner             = var.resource_owner
+  environment                = var.environment
 }
 
 module "notification" {
@@ -35,12 +39,16 @@ module "notification" {
   resource_owner  = var.resource_owner
   create_resource = var.create_resource
   email_address   = var.email_address
+  environment     = var.environment
+
 }
 
 module "iam" {
   source          = "./modules/iam"
   create_resource = var.create_resource
   resource_owner  = var.resource_owner
+  environment     = var.environment
+
 }
 
 module "compute" {
@@ -48,6 +56,7 @@ module "compute" {
   create_resource    = var.create_resource
   region             = var.region
   inst_type          = var.inst_type
+  ami                = data.aws_ami.latest_ubuntu.id
   ports              = var.ports
   CIDR               = var.CIDR
   public_subnet_id   = module.network.module_standart_public_subnet_id
@@ -56,6 +65,9 @@ module "compute" {
   scale_out_capacity = var.scaleout_capacity
   resource_owner     = var.resource_owner
   monitoring_profile = module.iam.module_iam_monitoring_profile
+  environment        = var.environment
+  key_name           = var.key_name
+
 }
 
 module "load_balancer" {
@@ -69,6 +81,8 @@ module "load_balancer" {
   vpc_id                    = module.network.module_vpc_id
   module_alb_security_group = module.compute.module_alb_security_group_standart_id
   resource_owner            = var.resource_owner
+  environment               = var.environment
+
 }
 
 module "monitoring" {
@@ -90,6 +104,8 @@ module "monitoring" {
   resource_owner      = var.resource_owner
   sns_alert_topic_arn = module.notification.module_output_sns_alert_topic_arn
   sns_ok_topic_arn    = module.notification.module_output_sns_ok_topic_arn
+  environment         = var.environment
+
 }
 
 module "logging" {
@@ -98,4 +114,6 @@ module "logging" {
   sns_topic_arn   = module.notification.module_output_sns_alert_topic_arn
   resource_owner  = var.resource_owner
   retention_days  = var.retention_days
+  environment     = var.environment
+
 }

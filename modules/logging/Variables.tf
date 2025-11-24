@@ -17,3 +17,7 @@ variable "retention_days" {
   description = "Retention days for log group"
   type        = number
 }
+variable "environment" {
+  description = "Production or Stage environment"
+  type        = string
+}

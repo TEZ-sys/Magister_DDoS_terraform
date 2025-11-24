@@ -2,14 +2,14 @@ variable "create_resource" {
   description = "True or false to create a resource"
   type        = map(bool)
   default = {
-    instance     = true
+    instance     = false
     auto_scale   = false
     load_balance = false
     monitoring   = false
     network      = false
     iam_role     = false
-    sns_topic    = true
-    logging      = true
+    sns_topic    = false
+    logging      = false
   }
 }
 
@@ -36,11 +36,13 @@ variable "resource_owner" {
   description = "Owner of resources"
   type        = map(string)
   default = {
-    name              = "dfutumai-standart"
-    owner             = "dfutumai"
-    Stage_Environment = "stage"
-    Prod_Environment  = "production"
+    name  = "dfutumai"
+    owner = "dfutumai"
   }
+}
+variable "environment" {
+  description = "Production or Stage environment"
+  type        = string
 }
 variable "retention_days" {
   description = "Retention days for log group"
@@ -48,6 +50,16 @@ variable "retention_days" {
   default     = 1
 }
 
+variable "profile" {
+  description = "AWS CLI profile to use"
+  type        = string
+  default     = "Terraform-AWS"
+}
+variable "key_name" {
+  description = "Key name for EC2 instances"
+  type        = string
+  default     = "DevOps-IaC"
+}
 variable "email_address" {
   description = "Email address for sns"
   type        = string
@@ -147,4 +159,15 @@ variable "comparison" {
 variable "name_space" {
   description = "Name space"
   type        = string
+}
+
+data "aws_availability_zones" "all" {}
+
+data "aws_ami" "latest_ubuntu" {
+  owners      = ["099720109477"]
+  most_recent = true
+  filter {
+    name   = "name"
+    values = ["ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-*"]
+  }
 }

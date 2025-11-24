@@ -8,11 +8,11 @@ resource "aws_lb" "alb" {
   subnets            = [var.public_subnet_id, var.sub_public_subnet]
 
   enable_deletion_protection = false
-  tags = {
-    Name        = "${var.resource_owner["name"]}-ALB"
-    Owner       = "${var.resource_owner["owner"]}"
-    Environment = "${var.resource_owner["Prod_Environment"]}"
-  }
+  tags = merge(var.resource_owner, {
+    Environment = var.environment == "production" ? "production" : "stage"
+
+
+  }, )
 }
 
 resource "aws_lb_target_group" "target_group" {
@@ -32,11 +32,11 @@ resource "aws_lb_target_group" "target_group" {
     unhealthy_threshold = 3
   }
 
-  tags = {
-    Name        = "${var.resource_owner["name"]}-Target-group"
-    Owner       = "${var.resource_owner["owner"]}"
-    Environment = "${var.resource_owner["Prod_Environment"]}"
-  }
+  tags = merge(var.resource_owner, {
+    Environment = var.environment == "production" ? "production" : "stage"
+
+
+  }, )
 }
 
 resource "aws_lb_target_group_attachment" "target_attachment" {

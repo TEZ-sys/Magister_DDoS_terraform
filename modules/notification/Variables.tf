@@ -13,3 +13,7 @@ variable "email_address" {
   type        = string
 }
 
+variable "environment" {
+  description = "Production or Stage environment"
+  type        = string
+}
