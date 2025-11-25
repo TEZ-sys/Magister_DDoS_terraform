@@ -15,12 +15,13 @@ resource "aws_instance" "standart_instance" {
   instance_type          = var.inst_type
   subnet_id              = var.public_subnet_id
   iam_instance_profile   = var.monitoring_profile
+  
+  key_name = var.key_name
   user_data = templatefile("${path.root}/script.sh",
     {
       environment = var.environment
       region      = var.region
   })
-  key_name = var.key_name
   tags = merge(var.resource_owner, {
     Environment = var.environment == "production" ? "production" : "stage"
   }, )
@@ -34,7 +35,9 @@ resource "aws_instance" "sub_instance" {
   ami                    = var.ami
   instance_type          = var.inst_type
   subnet_id              = var.sub_public_subnet
-
+  
+  key_name = var.key_name
+  user_data = file("${path.root}/install_apps.sh")
   tags = merge(var.resource_owner, {
     Environment = var.environment == "production" ? "production" : "stage"
   }, )
