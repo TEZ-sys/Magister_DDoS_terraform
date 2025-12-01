@@ -25,22 +25,22 @@ variable "CIDR" {
   type        = list(any)
 }
 
-variable "standart_vpc_cidr" {
+variable "vpc_cidr" {
   description = "CIDR for VPC"
   type        = string
 }
 
-variable "standart_public_subnet" {
+variable "public_subnet" {
   description = "CIDR for public subnet"
   type        = string
 }
 
-variable "standart_private_subnet" {
+variable "private_subnet" {
   description = "CIDR for private subnet"
   type        = string
 }
 
-variable "standart_sub_public_subnet" {
+variable "sub_public_subnet" {
   description = "CIDR for sub public subnet"
   type        = string
 }

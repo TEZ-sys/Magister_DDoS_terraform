@@ -53,7 +53,7 @@ variable "network_threshold" {
 
 variable "metric_name" {
   description = "Sets metric name"
-  type        = list(any)
+  type        = map(string)
 
 }
 
@@ -64,7 +64,7 @@ variable "comparison" {
 
 variable "name_space" {
   description = "Name space"
-  type        = string
+  type        = map(string)
 }
 
 variable "module_instance_id" {

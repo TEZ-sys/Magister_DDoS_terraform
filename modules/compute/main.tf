@@ -8,19 +8,20 @@ locals {
 }
 
 #-----------------------------------------standart-instance---------------------------------------
-resource "aws_instance" "standart_instance" {
+resource "aws_instance" "instance" {
   count                  = var.create_resource["instance"] ? 1 : 0
-  vpc_security_group_ids = [aws_security_group.standart_security_group[count.index].id]
+  vpc_security_group_ids = [aws_security_group.security_group[count.index].id]
   ami                    = var.ami
   instance_type          = var.inst_type
   subnet_id              = var.public_subnet_id
   iam_instance_profile   = var.monitoring_profile
-  
+
   key_name = var.key_name
   user_data = templatefile("${path.root}/script.sh",
     {
       environment = var.environment
       region      = var.region
+      Instance_id = aws_instance.instance[count.index].id
   })
   tags = merge(var.resource_owner, {
     Environment = var.environment == "production" ? "production" : "stage"
@@ -31,12 +32,12 @@ resource "aws_instance" "standart_instance" {
 #-----------------------------------------Sub-instance---------------------------------------
 resource "aws_instance" "sub_instance" {
   count                  = var.create_resource["instance"] ? 1 : 0
-  vpc_security_group_ids = [aws_security_group.standart_security_group[count.index].id]
+  vpc_security_group_ids = [aws_security_group.security_group[count.index].id]
   ami                    = var.ami
   instance_type          = var.inst_type
   subnet_id              = var.sub_public_subnet
-  
-  key_name = var.key_name
+
+  key_name  = var.key_name
   user_data = file("${path.root}/install_apps.sh")
   tags = merge(var.resource_owner, {
     Environment = var.environment == "production" ? "production" : "stage"
@@ -44,13 +45,13 @@ resource "aws_instance" "sub_instance" {
 }
 
 #-----------------------------------------Auto-scaling-group---------------------------------------
-resource "aws_launch_template" "standart_launch_template" {
+resource "aws_launch_template" "launch_template" {
   count         = var.create_resource["auto_scale"] ? 1 : 0
   name_prefix   = "Default-London-instance"
   image_id      = var.ami
   instance_type = var.inst_type
   network_interfaces {
-    security_groups = [aws_security_group.standart_security_group[count.index].id]
+    security_groups = [aws_security_group.security_group[count.index].id]
   }
   user_data = base64encode(<<-EOT
    #!/bin/bash
@@ -65,7 +66,7 @@ EOT
 }
 
 
-resource "aws_autoscaling_group" "standart_asg" {
+resource "aws_autoscaling_group" "asg" {
   count               = var.create_resource["auto_scale"] ? 1 : 0
   desired_capacity    = var.scale_out_capacity["desired"]
   min_size            = var.scale_out_capacity["min"]
@@ -73,7 +74,7 @@ resource "aws_autoscaling_group" "standart_asg" {
   vpc_zone_identifier = [var.sub_public_subnet]
 
   launch_template {
-    id = aws_launch_template.standart_launch_template[0].id
+    id = aws_launch_template.launch_template[0].id
   }
   tags = [
     for key, value in local.merged_tags : {
@@ -90,7 +91,7 @@ resource "aws_autoscaling_policy" "scale_out" {
   scaling_adjustment     = 1
   adjustment_type        = "ChangeInCapacity"
   cooldown               = 50
-  autoscaling_group_name = aws_autoscaling_group.standart_asg[count.index].name
+  autoscaling_group_name = aws_autoscaling_group.asg[count.index].name
 }
 
 resource "aws_autoscaling_policy" "scale_in" {
@@ -99,11 +100,11 @@ resource "aws_autoscaling_policy" "scale_in" {
   scaling_adjustment     = -1
   adjustment_type        = "ChangeInCapacity"
   cooldown               = 100
-  autoscaling_group_name = aws_autoscaling_group.standart_asg[count.index].name
+  autoscaling_group_name = aws_autoscaling_group.asg[count.index].name
 }
 
 #---------------------------------aws_security_group-----------------------------
-resource "aws_security_group" "standart_security_group" {
+resource "aws_security_group" "security_group" {
   count       = var.create_resource["instance"] ? 1 : 0
   name_prefix = "Security-Group for standart"
 

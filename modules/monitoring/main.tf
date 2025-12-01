@@ -1,11 +1,11 @@
 #----------------------------------standart-Monitoring-CPU-Scale-In-----------------------------------------------------
-resource "aws_cloudwatch_metric_alarm" "standart_monitoring_cpu_scale_in" {
+resource "aws_cloudwatch_metric_alarm" "monitoring_cpu_scale_in" {
   count                     = var.create_resource["monitoring"] ? 1 : 0
   alarm_name                = "standart-monitoring-cpu"
   comparison_operator       = var.comparison
   evaluation_periods        = var.evaluation_periods
-  metric_name               = var.metric_name[0]
-  namespace                 = var.name_space
+  metric_name               = var.metric_name["cpu"]
+  namespace                 = var.name_space["ec2"]
   period                    = var.scale_in_period
   statistic                 = "Average"
   threshold                 = var.scale_in_threshold
@@ -25,14 +25,14 @@ resource "aws_cloudwatch_metric_alarm" "standart_monitoring_cpu_scale_in" {
 }
 
 #----------------------------------standart-Monitoring-CPU-Scale-Out-----------------------------------------------------
-resource "aws_cloudwatch_metric_alarm" "standart_monitoring_cpu_scale_out" {
+resource "aws_cloudwatch_metric_alarm" "monitoring_cpu_scale_out" {
   count = var.create_resource["monitoring"] ? 1 : 0
 
   alarm_name                = "standart-monitoring-cpu"
   comparison_operator       = var.comparison
   evaluation_periods        = var.evaluation_periods
-  metric_name               = var.metric_name[0]
-  namespace                 = var.name_space
+  metric_name               = var.metric_name["cpu"]
+  namespace                 = var.name_space["ec2"]
   period                    = var.scale_out_period
   statistic                 = "Average"
   threshold                 = var.scale_out_threshold
@@ -51,18 +51,18 @@ resource "aws_cloudwatch_metric_alarm" "standart_monitoring_cpu_scale_out" {
 }
 
 #----------------------------------standart-Monitoring-Network--In-----------------------------------------------------
-resource "aws_cloudwatch_metric_alarm" "standart_monitoring_network_in" {
+resource "aws_cloudwatch_metric_alarm" "monitoring_custom_metric" {
   count = var.create_resource["monitoring"] ? 1 : 0
 
-  alarm_name          = "High-Network-In"
+  alarm_name          = "High-Custom-Metric"
   comparison_operator = var.comparison
   evaluation_periods  = var.evaluation_periods
-  metric_name         = var.metric_name[1]
-  namespace           = var.name_space
+  metric_name         = var.metric_name["custom"]
+  namespace           = var.name_space["custom"]
   period              = var.network_period
   statistic           = "Average"
-  threshold           = var.network_threshold # Set your desired threshold in bytes
-  alarm_description   = "Triggers if NetworkIn exceeds the threshold."
+  threshold           = var.network_threshold
+  alarm_description   = "Triggers if Custom metric exceeds the threshold."
 
   dimensions = {
     InstanceId = "${var.module_instance_id}"
@@ -75,17 +75,17 @@ resource "aws_cloudwatch_metric_alarm" "standart_monitoring_network_in" {
   }, )
 }
 #----------------------------------standart-Monitoring-Network--Out-----------------------------------------------------
-resource "aws_cloudwatch_metric_alarm" "standart_monitoring_network_out" {
+resource "aws_cloudwatch_metric_alarm" "monitoring_network_out" {
   count = var.create_resource["monitoring"] ? 1 : 0
 
   alarm_name          = "High-Network-Out"
   comparison_operator = var.comparison
   evaluation_periods  = var.evaluation_periods
-  metric_name         = var.metric_name[2]
-  namespace           = var.name_space
+  metric_name         = var.metric_name["network_out"]
+  namespace           = var.name_space["ec2"]
   period              = var.network_period
   statistic           = "Average"
-  threshold           = var.network_threshold # Set your desired threshold in bytes
+  threshold           = var.network_threshold
   alarm_description   = "Triggers if NetworkOut exceeds the threshold."
 
   dimensions = {
@@ -104,8 +104,8 @@ resource "aws_cloudwatch_metric_alarm" "Cloud_watch_and_sns" {
   alarm_name                = "standart-monitoring-cpu"
   comparison_operator       = var.comparison
   evaluation_periods        = var.evaluation_periods
-  metric_name               = var.metric_name[0]
-  namespace                 = var.name_space
+  metric_name               = var.metric_name["cpu"]
+  namespace                 = var.name_space["ec2"]
   period                    = var.scale_in_period
   statistic                 = "Average"
   threshold                 = 0.0

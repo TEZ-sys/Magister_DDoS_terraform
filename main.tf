@@ -12,26 +12,27 @@ provider "aws" {
   region  = var.region
   profile = var.profile
 }
-#TODO deploy tf state to backend s3
 #Deploy S3 for CDN with HTML
 
-
+locals {
+  environment = terraform.workspace
+}
 
 #--------------------------------------Modules-----------------------------------
 module "network" {
-  source                     = "./modules/network"
-  create_resource            = var.create_resource
-  region                     = var.region
-  availability_zones         = var.availability_zones
-  ports                      = var.ports
-  CIDR                       = var.CIDR
-  standart_vpc_cidr          = var.standart_vpc_cidr
-  standart_public_subnet     = var.standart_public_subnet
-  standart_sub_public_subnet = var.standart_sub_public_subnet
-  standart_private_subnet    = var.standart_private_subnet
-  subnet_id                  = module.network.module_standart_public_subnet_id
-  resource_owner             = var.resource_owner
-  environment                = var.environment
+  source             = "./modules/network"
+  create_resource    = var.create_resource
+  region             = var.region
+  availability_zones = var.availability_zones
+  ports              = var.ports
+  CIDR               = var.CIDR
+  vpc_cidr           = var.vpc_cidr
+  public_subnet      = var.public_subnet
+  sub_public_subnet  = var.sub_public_subnet
+  private_subnet     = var.private_subnet
+  subnet_id          = module.network.module_public_subnet_id
+  resource_owner     = var.resource_owner
+  environment        = var.environment
 }
 
 module "notification" {
@@ -59,8 +60,8 @@ module "compute" {
   ami                = data.aws_ami.latest_ubuntu.id
   ports              = var.ports
   CIDR               = var.CIDR
-  public_subnet_id   = module.network.module_standart_public_subnet_id
-  sub_public_subnet  = module.network.module_standart_sub_public_subnet_id
+  public_subnet_id   = module.network.module_public_subnet_id
+  sub_public_subnet  = module.network.module_sub_public_subnet_id
   vpc_id             = module.network.module_vpc_id
   scale_out_capacity = var.scaleout_capacity
   resource_owner     = var.resource_owner
@@ -75,11 +76,11 @@ module "load_balancer" {
   create_resource           = var.create_resource
   region                    = var.region
   ports                     = var.ports
-  module_instance_id        = module.compute.module_standart_instance_id
-  public_subnet_id          = module.network.module_standart_public_subnet_id
-  sub_public_subnet         = module.network.module_standart_sub_public_subnet_id
+  module_instance_id        = module.compute.module_instance_id
+  public_subnet_id          = module.network.module_public_subnet_id
+  sub_public_subnet         = module.network.module_sub_public_subnet_id
   vpc_id                    = module.network.module_vpc_id
-  module_alb_security_group = module.compute.module_alb_security_group_standart_id
+  module_alb_security_group = module.compute.module_alb_security_group_id
   resource_owner            = var.resource_owner
   environment               = var.environment
 
@@ -98,7 +99,7 @@ module "monitoring" {
   network_threshold   = var.network_threshold
   metric_name         = var.metric_name
   comparison          = var.comparison
-  module_instance_id  = module.compute.module_standart_instance_id
+  module_instance_id  = module.compute.module_instance_id
   module_scale_out_id = module.compute.module_scale_out_id
   module_scale_in_id  = module.compute.module_scale_in_id
   resource_owner      = var.resource_owner

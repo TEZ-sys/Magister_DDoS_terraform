@@ -35,3 +35,33 @@ chmod +x /usr/local/bin/publish_disk_metrics.sh
 
 # Add cron job to run every 1 minute
 (crontab -l 2>/dev/null; echo "*/1 * * * * /usr/local/bin/publish_disk_metrics.sh") | crontab -
+
+# Install and configure CloudWatch agent
+apt-get update -y
+apt-get install -y amazon-cloudwatch-agent
+
+cat << 'CONFIG' > /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json
+{
+  "logs": {
+    "logs_collected": {
+      "files": {
+        "collect_list": [
+          {
+            "file_path": "/var/log/syslog",
+            "log_group_name": "/ubuntu/logs",
+            "log_stream_name": "{instance_id}-syslog"
+          },
+          {
+            "file_path": "/var/log/auth.log",
+            "log_group_name": "/ubuntu/logs",
+            "log_stream_name": "{instance_id}-auth"
+          }
+        ]
+      }
+    }
+  }
+}
+CONFIG
+
+systemctl enable amazon-cloudwatch-agent
+systemctl start amazon-cloudwatch-agent
