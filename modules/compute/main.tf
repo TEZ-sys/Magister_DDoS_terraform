@@ -21,10 +21,9 @@ resource "aws_instance" "instance" {
     {
       environment = var.environment
       region      = var.region
-      Instance_id = aws_instance.instance[count.index].id
   })
   tags = merge(var.resource_owner, {
-    Environment = var.environment == "production" ? "production" : "stage"
+    Environment = var.environment
   }, )
 }
 
@@ -40,7 +39,7 @@ resource "aws_instance" "sub_instance" {
   key_name  = var.key_name
   user_data = file("${path.root}/install_apps.sh")
   tags = merge(var.resource_owner, {
-    Environment = var.environment == "production" ? "production" : "stage"
+    Environment = var.environment
   }, )
 }
 
@@ -61,7 +60,7 @@ resource "aws_launch_template" "launch_template" {
 EOT
   )
   tags = merge(var.resource_owner, {
-    Environment = var.environment == "production" ? "production" : "stage"
+    Environment = var.environment
   }, )
 }
 
@@ -133,7 +132,7 @@ resource "aws_security_group" "security_group" {
   }
 
   tags = merge(var.resource_owner, {
-    Environment = var.environment == "production" ? "production" : "stage"
+    Environment = var.environment
   }, )
 }
 
@@ -167,6 +166,6 @@ resource "aws_security_group" "alb_sg" {
   }
 
   tags = merge(var.resource_owner, {
-    Environment = var.environment == "production" ? "production" : "stage"
+    Environment = var.environment
   }, )
 }

@@ -12,7 +12,7 @@ resource "aws_iam_role" "monitoring_role" {
   })
 
   tags = merge(var.resource_owner, {
-    Environment = var.environment == "production" ? "production" : "stage"
+    Environment = var.environment
 
 
   }, )
@@ -48,8 +48,7 @@ resource "aws_iam_policy" "cw_put_logs" {
         Effect = "Allow",
         Action = [
           "logs:CreateLogStream",
-          "logs:PutLogEvents",
-          "logs:CreateLogGroup"
+          "logs:PutLogEvents"
         ],
         Resource = "*"
       }

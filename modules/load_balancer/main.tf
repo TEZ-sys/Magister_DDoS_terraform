@@ -9,7 +9,7 @@ resource "aws_lb" "alb" {
 
   enable_deletion_protection = false
   tags = merge(var.resource_owner, {
-    Environment = var.environment == "production" ? "production" : "stage"
+    Environment = var.environment
 
 
   }, )
@@ -33,7 +33,7 @@ resource "aws_lb_target_group" "target_group" {
   }
 
   tags = merge(var.resource_owner, {
-    Environment = var.environment == "production" ? "production" : "stage"
+    Environment = var.environment
 
 
   }, )

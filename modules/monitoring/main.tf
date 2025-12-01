@@ -18,7 +18,7 @@ resource "aws_cloudwatch_metric_alarm" "monitoring_cpu_scale_in" {
   alarm_actions = [var.module_scale_in_id]
 
   tags = merge(var.resource_owner, {
-    Environment = var.environment == "production" ? "production" : "stage"
+    Environment = var.environment
 
 
   }, )
@@ -44,7 +44,7 @@ resource "aws_cloudwatch_metric_alarm" "monitoring_cpu_scale_out" {
   }
   alarm_actions = [var.module_scale_out_id]
   tags = merge(var.resource_owner, {
-    Environment = var.environment == "production" ? "production" : "stage"
+    Environment = var.environment
 
 
   }, )
@@ -69,7 +69,7 @@ resource "aws_cloudwatch_metric_alarm" "monitoring_custom_metric" {
   }
 
   tags = merge(var.resource_owner, {
-    Environment = var.environment == "production" ? "production" : "stage"
+    Environment = var.environment
 
 
   }, )
@@ -92,7 +92,7 @@ resource "aws_cloudwatch_metric_alarm" "monitoring_network_out" {
     InstanceId = "${var.module_instance_id}"
   }
   tags = merge(var.resource_owner, {
-    Environment = var.environment == "production" ? "production" : "stage"
+    Environment = var.environment
 
 
   }, )
@@ -119,7 +119,7 @@ resource "aws_cloudwatch_metric_alarm" "Cloud_watch_and_sns" {
   ok_actions    = [var.sns_ok_topic_arn]
 
   tags = merge(var.resource_owner, {
-    Environment = var.environment == "production" ? "production" : "stage"
+    Environment = var.environment
 
 
   }, )

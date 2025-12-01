@@ -37,13 +37,10 @@ variable "resource_owner" {
   type        = map(string)
   default = {
     name  = "dfutumai"
-    owner = "dfutumai"
+    owner = ""
   }
 }
-variable "environment" {
-  description = "Production or Stage environment"
-  type        = string
-}
+
 variable "retention_days" {
   description = "Retention days for log group"
   type        = number
@@ -53,7 +50,7 @@ variable "retention_days" {
 variable "profile" {
   description = "AWS CLI profile to use"
   type        = string
-  default     = "Terraform-AWS"
+  default     = "dfutumai"
 }
 variable "key_name" {
   description = "Key name for EC2 instances"
@@ -91,22 +88,22 @@ variable "CIDR" {
   type        = list(any)
 }
 
-variable "standart_vpc_cidr" {
+variable "vpc_cidr" {
   description = "CIDR for VPC"
   type        = string
 }
 
-variable "standart_public_subnet" {
+variable "public_subnet" {
   description = "CIDR for public subnet"
   type        = string
 }
 
-variable "standart_private_subnet" {
+variable "private_subnet" {
   description = "CIDR for private subnet"
   type        = string
 }
 
-variable "standart_sub_public_subnet" {
+variable "sub_public_subnet" {
   description = "CIDR for sub public subnet"
   type        = string
 }
@@ -146,9 +143,13 @@ variable "network_threshold" {
 }
 
 variable "metric_name" {
-  description = "Sets metric name"
-  type        = list(any)
-
+  type = map(string)
+  default = {
+    cpu         = "CPUUtilization"
+    network_in  = "NetworkIn"
+    network_out = "NetworkOut"
+    custom      = "DiskUsageRootPercent"
+  }
 }
 
 variable "comparison" {
@@ -157,11 +158,12 @@ variable "comparison" {
 }
 
 variable "name_space" {
-  description = "Name space"
-  type        = string
+  type = map(string)
+  default = {
+    ec2    = "AWS/EC2"
+    custom = "Custom/System"
+  }
 }
-
-data "aws_availability_zones" "all" {}
 
 data "aws_ami" "latest_ubuntu" {
   owners      = ["099720109477"]
@@ -170,4 +172,9 @@ data "aws_ami" "latest_ubuntu" {
     name   = "name"
     values = ["ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-*"]
   }
+}
+
+locals {
+  description = "Environments from workspaces"
+  environment = terraform.workspace
 }

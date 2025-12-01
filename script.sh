@@ -16,6 +16,8 @@ cat << 'EOT' > /usr/local/bin/publish_disk_metrics.sh
 NAMESPACE="Custom/System"
 ENVIRONMENT="${environment}"
 HOSTNAME=$(hostname)
+INSTANCE_ID=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)
+
 
 REGION="${region}"
 
@@ -49,12 +51,12 @@ cat << 'CONFIG' > /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.j
           {
             "file_path": "/var/log/syslog",
             "log_group_name": "/ubuntu/logs",
-            "log_stream_name": "{instance_id}-syslog"
+            "log_stream_name": "{INSTANCE_ID}-syslog"
           },
           {
             "file_path": "/var/log/auth.log",
             "log_group_name": "/ubuntu/logs",
-            "log_stream_name": "{instance_id}-auth"
+            "log_stream_name": "{INSTANCE_ID}-auth"
           }
         ]
       }

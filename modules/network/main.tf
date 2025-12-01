@@ -4,7 +4,7 @@ resource "aws_vpc" "vpc" {
   cidr_block       = var.vpc_cidr
   instance_tenancy = "default"
   tags = merge(var.resource_owner, {
-    Environment = var.environment == "production" ? "production" : "stage"
+    Environment = var.environment
 
 
   }, )
@@ -15,7 +15,7 @@ resource "aws_internet_gateway" "IGW" {
   count  = var.create_resource["network"] ? 1 : 0
   vpc_id = aws_vpc.vpc[count.index].id
   tags = merge(var.resource_owner, {
-    Environment = var.environment == "production" ? "production" : "stage"
+    Environment = var.environment
 
 
   }, )
@@ -29,7 +29,7 @@ resource "aws_subnet" "public_subnet" {
   map_public_ip_on_launch = true
   availability_zone       = var.availability_zones["az1"]
   tags = merge(var.resource_owner, {
-    Environment = var.environment == "production" ? "production" : "stage"
+    Environment = var.environment
 
 
   }, )
@@ -42,7 +42,7 @@ resource "aws_subnet" "private_subnet" {
   cidr_block        = var.private_subnet
   availability_zone = var.availability_zones["az1"]
   tags = merge(var.resource_owner, {
-    Environment = var.environment == "production" ? "production" : "stage"
+    Environment = var.environment
 
 
   }, )
@@ -57,7 +57,7 @@ resource "aws_route_table" "PublicRT" {
     gateway_id = aws_internet_gateway.IGW[count.index].id
   }
   tags = merge(var.resource_owner, {
-    Environment = var.environment == "production" ? "production" : "stage"
+    Environment = var.environment
 
 
   }, )
@@ -72,7 +72,7 @@ resource "aws_route_table" "PrivateRT" {
     nat_gateway_id = aws_nat_gateway.NATgw[count.index].id
   }
   tags = merge(var.resource_owner, {
-    Environment = var.environment == "production" ? "production" : "stage"
+    Environment = var.environment
 
 
   }, )
@@ -100,7 +100,7 @@ resource "aws_subnet" "sub_public_subnet" {
   map_public_ip_on_launch = true
   availability_zone       = var.availability_zones["az2"]
   tags = merge(var.resource_owner, {
-    Environment = var.environment == "production" ? "production" : "stage"
+    Environment = var.environment
 
 
   }, )
@@ -115,7 +115,7 @@ resource "aws_route_table" "sub_PublicRT" {
     gateway_id = aws_internet_gateway.IGW[count.index].id
   }
   tags = merge(var.resource_owner, {
-    Environment = var.environment == "production" ? "production" : "stage"
+    Environment = var.environment
 
 
   }, )
@@ -132,7 +132,7 @@ resource "aws_route_table_association" "sub_PublicRTassociation" {
 resource "aws_eip" "nat_eip" {
   count = var.create_resource["network"] ? 1 : 0
   tags = merge(var.resource_owner, {
-    Environment = var.environment == "production" ? "production" : "stage"
+    Environment = var.environment
 
 
   }, )
@@ -144,7 +144,7 @@ resource "aws_nat_gateway" "NATgw" {
   allocation_id = aws_eip.nat_eip[count.index].id
   subnet_id     = aws_subnet.public_subnet[count.index].id
   tags = merge(var.resource_owner, {
-    Environment = var.environment == "production" ? "production" : "stage"
+    Environment = var.environment
 
 
   }, )
