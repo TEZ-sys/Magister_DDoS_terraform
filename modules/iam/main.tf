@@ -11,11 +11,11 @@ resource "aws_iam_role" "monitoring_role" {
     }]
   })
 
-  tags = merge(var.resource_owner, {
+  tags = {
+    Name        = var.resource_owner["name"]
+    Owner       = var.resource_owner["owner"]
     Environment = var.environment
-
-
-  }, )
+  }
 }
 
 resource "aws_iam_policy" "cw_put_metric" {

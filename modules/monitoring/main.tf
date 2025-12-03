@@ -17,11 +17,11 @@ resource "aws_cloudwatch_metric_alarm" "monitoring_cpu_scale_in" {
   }
   alarm_actions = [var.module_scale_in_id]
 
-  tags = merge(var.resource_owner, {
+  tags = {
+    Name        = var.resource_owner["name"]
+    Owner       = var.resource_owner["owner"]
     Environment = var.environment
-
-
-  }, )
+  }
 }
 
 #----------------------------------standart-Monitoring-CPU-Scale-Out-----------------------------------------------------
@@ -43,11 +43,11 @@ resource "aws_cloudwatch_metric_alarm" "monitoring_cpu_scale_out" {
     InstanceId = "${var.module_instance_id}"
   }
   alarm_actions = [var.module_scale_out_id]
-  tags = merge(var.resource_owner, {
+  tags = {
+    Name        = var.resource_owner["name"]
+    Owner       = var.resource_owner["owner"]
     Environment = var.environment
-
-
-  }, )
+  }
 }
 
 #----------------------------------standart-Monitoring-Network--In-----------------------------------------------------
@@ -68,11 +68,11 @@ resource "aws_cloudwatch_metric_alarm" "monitoring_custom_metric" {
     InstanceId = "${var.module_instance_id}"
   }
 
-  tags = merge(var.resource_owner, {
+  tags = {
+    Name        = var.resource_owner["name"]
+    Owner       = var.resource_owner["owner"]
     Environment = var.environment
-
-
-  }, )
+  }
 }
 #----------------------------------standart-Monitoring-Network--Out-----------------------------------------------------
 resource "aws_cloudwatch_metric_alarm" "monitoring_network_out" {
@@ -91,11 +91,11 @@ resource "aws_cloudwatch_metric_alarm" "monitoring_network_out" {
   dimensions = {
     InstanceId = "${var.module_instance_id}"
   }
-  tags = merge(var.resource_owner, {
+  tags = {
+    Name        = var.resource_owner["name"]
+    Owner       = var.resource_owner["owner"]
     Environment = var.environment
-
-
-  }, )
+  }
 }
 
 #----------------------------------CloudWatch+SNS-----------------------------------------------------
@@ -118,9 +118,9 @@ resource "aws_cloudwatch_metric_alarm" "Cloud_watch_and_sns" {
   alarm_actions = [var.sns_alert_topic_arn]
   ok_actions    = [var.sns_ok_topic_arn]
 
-  tags = merge(var.resource_owner, {
+  tags = {
+    Name        = var.resource_owner["name"]
+    Owner       = var.resource_owner["owner"]
     Environment = var.environment
-
-
-  }, )
+  }
 }

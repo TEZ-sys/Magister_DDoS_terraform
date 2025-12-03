@@ -83,6 +83,18 @@ module "load_balancer" {
   environment               = local.environment
 
 }
+module "domain" {
+  source          = "./modules/domain"
+  create_resource = var.create_resource
+  domain_name     = var.domain_name
+  dns_type        = var.dns_type
+  dns_ttl         = var.dns_ttl
+  vpc_id          = module.network.module_vpc_id
+  vpc_region      = var.region
+  resource_owner  = var.resource_owner
+  environment     = local.environment
+
+}
 
 module "monitoring" {
   source              = "./modules/monitoring"
@@ -114,5 +126,32 @@ module "logging" {
   resource_owner  = var.resource_owner
   retention_days  = var.retention_days
   environment     = local.environment
+
+}
+
+module "s3_storage" {
+  source          = "./modules/s3_storage"
+  bucket_name     = var.bucket_name
+  bucket_acl      = var.bucket_acl
+  index_document  = var.index_document
+  content_type    = var.content_type
+  create_resource = var.create_resource
+  resource_owner  = var.resource_owner
+  environment     = local.environment
+}
+module "cdn" {
+  source                     = "./modules/cdn"
+  create_resource            = var.create_resource
+  bucket_name                = module.s3_storage.module_s3_bucket_name
+  cdn_s3_link                = module.s3_storage.module_s3_bucket_website_endpoint
+  cdn_allowed_methods        = var.cdn_allowed_methods
+  cdn_cached_methods         = var.cdn_cached_methods
+  cdn_ttl                    = var.cdn_ttl
+  cdn_viewer_protocol_policy = var.cdn_viewer_protocol_policy
+  cdn_s3_origin              = var.cdn_s3_origin
+  index_document             = var.index_document
+  error_document             = var.error_document
+  resource_owner             = var.resource_owner
+  environment                = local.environment
 
 }

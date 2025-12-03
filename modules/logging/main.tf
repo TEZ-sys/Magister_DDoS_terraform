@@ -2,11 +2,11 @@ resource "aws_cloudwatch_log_group" "log_group" {
   count             = var.create_resource["logging"] ? 1 : 0
   name              = "nebo_log_group"
   retention_in_days = var.retention_days
-  tags = merge(var.resource_owner, {
+  tags = {
+    Name        = var.resource_owner["name"]
+    Owner       = var.resource_owner["owner"]
     Environment = var.environment
-
-
-  }, )
+  }
 }
 
 resource "aws_cloudwatch_log_stream" "log_stream" {

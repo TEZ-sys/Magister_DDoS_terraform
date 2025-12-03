@@ -10,6 +10,9 @@ variable "create_resource" {
     iam_role     = false
     sns_topic    = false
     logging      = false
+    dns          = false
+    s3_storage   = false
+    cdn          = false
   }
 }
 
@@ -18,8 +21,8 @@ variable "scaleout_capacity" {
   type        = map(number)
   default = {
     min     = 1
-    max     = 3
     desired = 2
+    max     = 3
   }
 }
 variable "availability_zones" {
@@ -37,7 +40,7 @@ variable "resource_owner" {
   type        = map(string)
   default = {
     name  = "dfutumai"
-    owner = ""
+    owner = ".com"
   }
 }
 
@@ -82,6 +85,7 @@ variable "ports" {
   description = "Allow ports"
   type        = list(any)
 }
+#-----------------------------------network--------------------------------------------------
 
 variable "CIDR" {
   description = "CIDR for ingress and egress"
@@ -107,6 +111,8 @@ variable "sub_public_subnet" {
   description = "CIDR for sub public subnet"
   type        = string
 }
+
+#-----------------------------------monitoring--------------------------------------------------
 
 variable "scale_in_period" {
   description = "Scale in preiod"
@@ -164,7 +170,90 @@ variable "name_space" {
     custom = "Custom/System"
   }
 }
+#-----------------------------------route-53----------------------------------------------------
 
+variable "domain_name" {
+  description = "The domain name (example.com)"
+  type        = string
+  default     = "Nebotask.com"
+}
+
+variable "dns_type" {
+  description = "DNS record type (A, CNAME, etc.)"
+  type        = string
+  default     = "NS"
+}
+
+variable "dns_ttl" {
+  description = "DNS record TTL"
+  type        = number
+  default     = 300
+}
+
+#-----------------------------------s3-storage-variables-------------------------------------------
+variable "bucket_name" {
+  description = "S3 Bucket name"
+  type        = string
+  default     = "dfutumai-bucket"
+}
+
+variable "bucket_acl" {
+  description = "S3 Bucket acl"
+  type        = string
+  default     = "private"
+}
+variable "index_document" {
+  description = "S3 Object key"
+  type        = string
+  default     = "index.html"
+}
+
+variable "error_document" {
+  description = "S3 Object key"
+  type        = string
+  default     = "error.html"
+}
+
+variable "content_type" {
+  description = "S3 Object content type"
+  type        = string
+  default     = "text/html"
+}
+#-----------------------------------CDN-------------------------------------------------------------
+variable "cdn_ttl" {
+  description = "CDN TTL"
+  type        = map(number)
+  default = {
+    min     = 0
+    default = 3600
+    max     = 86400
+  }
+}
+
+variable "cdn_allowed_methods" {
+  description = "CDN allowed methods"
+  type        = list(string)
+  default     = ["GET", "HEAD", "OPTIONS", "PUT", "POST", "PATCH", "DELETE"]
+}
+
+variable "cdn_cached_methods" {
+  description = "CDN cached methods"
+  type        = list(string)
+  default     = ["GET", "HEAD"]
+}
+
+variable "cdn_viewer_protocol_policy" {
+  description = "CDN viewer protocol policy"
+  type        = string
+  default     = "redirect-to-https"
+}
+
+variable "cdn_s3_origin" {
+  description = "CDN S3 origin ID"
+  type        = string
+  default     = "s3-origin"
+}
+#----------------------------------Data Sources-----------------------------------------------------
 data "aws_ami" "latest_ubuntu" {
   owners      = ["099720109477"]
   most_recent = true

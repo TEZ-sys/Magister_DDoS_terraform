@@ -17,14 +17,16 @@ resource "aws_instance" "instance" {
   iam_instance_profile   = var.monitoring_profile
 
   key_name = var.key_name
-  user_data = templatefile("${path.root}/script.sh",
+  user_data = templatefile("${path.root}/scripts/script.sh",
     {
       environment = var.environment
       region      = var.region
   })
-  tags = merge(var.resource_owner, {
+  tags = {
+    Name        = var.resource_owner["name"]
+    Owner       = var.resource_owner["owner"]
     Environment = var.environment
-  }, )
+  }
 }
 
 
@@ -37,10 +39,12 @@ resource "aws_instance" "sub_instance" {
   subnet_id              = var.sub_public_subnet
 
   key_name  = var.key_name
-  user_data = file("${path.root}/install_apps.sh")
-  tags = merge(var.resource_owner, {
+  user_data = file("${path.root}/scripts/install_apps.sh")
+  tags = {
+    Name        = var.resource_owner["name"]
+    Owner       = var.resource_owner["owner"]
     Environment = var.environment
-  }, )
+  }
 }
 
 #-----------------------------------------Auto-scaling-group---------------------------------------
@@ -59,9 +63,11 @@ resource "aws_launch_template" "launch_template" {
     ufw allow 80
 EOT
   )
-  tags = merge(var.resource_owner, {
+  tags = {
+    Name        = var.resource_owner["name"]
+    Owner       = var.resource_owner["owner"]
     Environment = var.environment
-  }, )
+  }
 }
 
 
@@ -131,9 +137,11 @@ resource "aws_security_group" "security_group" {
     cidr_blocks = var.CIDR
   }
 
-  tags = merge(var.resource_owner, {
+  tags = {
+    Name        = var.resource_owner["name"]
+    Owner       = var.resource_owner["owner"]
     Environment = var.environment
-  }, )
+  }
 }
 
 
@@ -165,7 +173,9 @@ resource "aws_security_group" "alb_sg" {
     cidr_blocks = var.CIDR
   }
 
-  tags = merge(var.resource_owner, {
+  tags = {
+    Name        = var.resource_owner["name"]
+    Owner       = var.resource_owner["owner"]
     Environment = var.environment
-  }, )
+  }
 }
