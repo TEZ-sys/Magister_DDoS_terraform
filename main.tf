@@ -134,10 +134,13 @@ module "s3_storage" {
   bucket_name     = var.bucket_name
   bucket_acl      = var.bucket_acl
   index_document  = var.index_document
+  error_document  = var.error_document
   content_type    = var.content_type
+  cloudfront_oai  = module.cdn.module_cloudfront_oai_iam_arn
   create_resource = var.create_resource
   resource_owner  = var.resource_owner
   environment     = local.environment
+
 }
 module "cdn" {
   source                     = "./modules/cdn"
@@ -149,9 +152,20 @@ module "cdn" {
   cdn_ttl                    = var.cdn_ttl
   cdn_viewer_protocol_policy = var.cdn_viewer_protocol_policy
   cdn_s3_origin              = var.cdn_s3_origin
+  cdn_certificate_arn        = module.certs.cdn_certificate_arn
   index_document             = var.index_document
-  error_document             = var.error_document
+  cdn_boolean                = var.cdn_boolean
+  cdn_string_config                 = var.cdn_string_config
   resource_owner             = var.resource_owner
   environment                = local.environment
+
+}
+module "certs" {
+  source          = "./modules/certs"
+  create_resource = var.create_resource
+  domain_name     = var.domain_name
+  zone_id         = module.domain.module_route53_zone_id
+  resource_owner  = var.resource_owner
+  environment     = local.environment
 
 }

@@ -28,6 +28,26 @@ resource "aws_s3_bucket_website_configuration" "nebo_bucket_website" {
   }
 }
 
+resource "aws_s3_bucket_policy" "cloudfront_access" {
+  count  = var.create_resource["s3_storage"] ? 1 : 0
+  bucket = aws_s3_bucket.nebo_bucket[0].id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "AllowCloudFrontOAI"
+        Effect = "Allow"
+        Principal = {
+          AWS = "${var.cloudfront_oai}"
+        }
+        Action   = "s3:GetObject"
+        Resource = "${aws_s3_bucket.nebo_bucket[0].arn}/*"
+      }
+    ]
+  })
+}
+
 resource "aws_s3_object" "index_html" {
   count        = var.create_resource["s3_storage"] ? 1 : 0
   bucket       = aws_s3_bucket.nebo_bucket[0].id
@@ -40,7 +60,7 @@ resource "aws_s3_object" "index_html" {
 resource "aws_s3_object" "error_html" {
   count        = var.create_resource["s3_storage"] ? 1 : 0
   bucket       = aws_s3_bucket.nebo_bucket[0].id
-  key          = var.index_document
+  key          = var.error_document
   source       = "${path.root}/scripts/error.html"
   content_type = var.content_type
   etag         = filemd5("${path.root}/scripts/error.html")

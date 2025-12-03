@@ -33,3 +33,7 @@ variable "content_type" {
   description = "S3 Object content type"
   type        = string
 }
+variable "cloudfront_oai" {
+  description = "CloudFront Origin Access Identity"
+  type        = string
+}

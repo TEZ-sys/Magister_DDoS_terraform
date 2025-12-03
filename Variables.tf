@@ -1,3 +1,4 @@
+#-----------------------------------general--------------------------------------------------
 variable "create_resource" {
   description = "True or false to create a resource"
   type        = map(bool)
@@ -6,15 +7,47 @@ variable "create_resource" {
     auto_scale   = false
     load_balance = false
     monitoring   = false
-    network      = false
+    network      = true
     iam_role     = false
     sns_topic    = false
     logging      = false
-    dns          = false
-    s3_storage   = false
-    cdn          = false
+    dns          = true
+    s3_storage   = true
+    cdn          = true
   }
 }
+
+variable "resource_owner" {
+  description = "Owner of resources"
+  type        = map(string)
+  default = {
+    name  = "dfutumai"
+    owner = " "
+  }
+}
+
+variable "profile" {
+  description = "AWS CLI profile to use"
+  type        = string
+  default     = "dfutumai"
+}
+variable "region" {
+  description = "AWS London-Region"
+  type        = string
+}
+
+variable "key_name" {
+  description = "Key name for EC2 instances"
+  type        = string
+  default     = "DevOps-IaC"
+}
+
+variable "email_address" {
+  description = "Email address for sns"
+  type        = string
+  default     = " "
+}
+#-----------------------------------compute--------------------------------------------------
 
 variable "scaleout_capacity" {
   description = "Amount of instances for each of ASG"
@@ -24,50 +57,6 @@ variable "scaleout_capacity" {
     desired = 2
     max     = 3
   }
-}
-variable "availability_zones" {
-  description = "Availability zones"
-  type        = map(string)
-  default = {
-    az1 = "eu-west-2a"
-    az2 = "eu-west-2b"
-    az3 = "eu-west-2c"
-  }
-}
-
-variable "resource_owner" {
-  description = "Owner of resources"
-  type        = map(string)
-  default = {
-    name  = "dfutumai"
-    owner = ".com"
-  }
-}
-
-variable "retention_days" {
-  description = "Retention days for log group"
-  type        = number
-  default     = 1
-}
-
-variable "profile" {
-  description = "AWS CLI profile to use"
-  type        = string
-  default     = "dfutumai"
-}
-variable "key_name" {
-  description = "Key name for EC2 instances"
-  type        = string
-  default     = "DevOps-IaC"
-}
-variable "email_address" {
-  description = "Email address for sns"
-  type        = string
-}
-
-variable "region" {
-  description = "AWS London-Region"
-  type        = string
 }
 
 variable "ami" {
@@ -86,6 +75,15 @@ variable "ports" {
   type        = list(any)
 }
 #-----------------------------------network--------------------------------------------------
+variable "availability_zones" {
+  description = "Availability zones"
+  type        = map(string)
+  default = {
+    az1 = "eu-west-2a"
+    az2 = "eu-west-2b"
+    az3 = "eu-west-2c"
+  }
+}
 
 variable "CIDR" {
   description = "CIDR for ingress and egress"
@@ -170,6 +168,12 @@ variable "name_space" {
     custom = "Custom/System"
   }
 }
+
+variable "retention_days" {
+  description = "Retention days for log group"
+  type        = number
+  default     = 1
+}
 #-----------------------------------route-53----------------------------------------------------
 
 variable "domain_name" {
@@ -220,6 +224,28 @@ variable "content_type" {
   default     = "text/html"
 }
 #-----------------------------------CDN-------------------------------------------------------------
+variable "cdn_boolean" {
+  description = "Owner of resources"
+  type        = map(bool)
+  default = {
+    query_string                   = false
+    cloudfront_default_certificate = false
+    enabled                        = true
+    is_ipv6_enabled                = true
+  }
+}
+
+variable "cdn_string_config" {
+  description = "CDN string config"
+  type        = map(string)
+  default = {
+    minimum_protocol_version = "TLSv1.2_2021"
+    ssl_support_method       = "sni-only"
+    forward                  = "none"
+    restriction_type         = "none"
+  }
+}
+
 variable "cdn_ttl" {
   description = "CDN TTL"
   type        = map(number)

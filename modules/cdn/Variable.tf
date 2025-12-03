@@ -26,6 +26,15 @@ variable "cdn_cached_methods" {
   description = "CDN cached methods"
   type        = list(string)
 }
+variable "cdn_boolean" {
+  description = "Owner of resources"
+  type        = map(bool)
+}
+
+variable "cdn_string_config" {
+  description = "CDN string config"
+  type        = map(string)
+}
 
 variable "cdn_viewer_protocol_policy" {
   description = "CDN viewer protocol policy"
@@ -35,7 +44,11 @@ variable "cdn_s3_origin" {
   description = "CDN S3 origin ID"
   type        = string
 }
+variable "cdn_certificate_arn" {
+  description = "CDN ACM Certificate ARN"
+  type        = string
 
+}
 variable "bucket_name" {
   description = "S3 Bucket name"
   type        = string
