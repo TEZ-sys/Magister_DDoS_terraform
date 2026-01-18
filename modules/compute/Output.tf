@@ -9,13 +9,13 @@ output "module_instance_ip" {
 }
 
 output "module_scale_out_id" {
-  value       = var.create_resource["auto_scale"] ? aws_autoscaling_policy.scale_out[0].id : null
-  description = "ID of the scale out policy"
+  value       = var.create_resource["auto_scale"] ? aws_autoscaling_policy.scale_out[0].arn : null
+  description = "ARN of the scale out policy"
 }
 
 output "module_scale_in_id" {
-  value       = var.create_resource["auto_scale"] ? aws_autoscaling_policy.scale_in[0].id : null
-  description = "ID of the scale in policy"
+  value       = var.create_resource["auto_scale"] ? aws_autoscaling_policy.scale_in[0].arn : null
+  description = "ARN of the scale in policy"
 }
 
 output "module_security_group_id" {

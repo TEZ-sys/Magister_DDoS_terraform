@@ -57,7 +57,7 @@ resource "aws_cloudwatch_metric_alarm" "monitoring_custom_metric" {
   alarm_name          = "High-Custom-Metric"
   comparison_operator = var.comparison
   evaluation_periods  = var.evaluation_periods
-  metric_name         = var.metric_name["custom"]
+  metric_name         = var.metric_name["customCPU"]
   namespace           = var.name_space["custom"]
   period              = var.network_period
   statistic           = "Average"
@@ -118,6 +118,89 @@ resource "aws_cloudwatch_metric_alarm" "Cloud_watch_and_sns" {
   alarm_actions = [var.sns_alert_topic_arn]
   ok_actions    = [var.sns_ok_topic_arn]
 
+  tags = {
+    Name        = var.resource_owner["name"]
+    Owner       = var.resource_owner["owner"]
+    Environment = var.environment
+  }
+}
+
+
+#-------------------------------------Custom---Metric-DashBoard-----------------------------------------
+resource "aws_cloudwatch_metric_alarm" "monitoring_ram_usage" {
+  count = var.create_resource["monitoring"] ? 1 : 0
+
+  alarm_name          = "High-RAM-Usage"
+  comparison_operator = var.comparison
+  evaluation_periods  = var.evaluation_periods
+  metric_name         = var.metric_name["customRAM"]
+  namespace           = var.name_space["custom"]
+  period              = var.network_period
+  statistic           = "Average"
+  threshold           = 10
+  alarm_description   = "Triggers if RAM usage exceeds the threshold."
+
+  dimensions = {
+    InstanceId = "${var.module_instance_id}"
+  }
+
+  alarm_actions = [var.sns_alert_topic_arn]
+  ok_actions    = [var.sns_ok_topic_arn]
+
+  tags = {
+    Name        = var.resource_owner["name"]
+    Owner       = var.resource_owner["owner"]
+    Environment = var.environment
+  }
+}
+
+resource "aws_cloudwatch_metric_alarm" "monitoring_disk_usage" {
+  count = var.create_resource["monitoring"] ? 1 : 0
+
+  alarm_name          = "High-Disk-Usage"
+  comparison_operator = var.comparison
+  evaluation_periods  = var.evaluation_periods
+  metric_name         = var.metric_name["customDisk"]
+  namespace           = var.name_space["custom"]
+  period              = var.network_period
+  statistic           = "Average"
+  threshold           = 10
+  alarm_description   = "Triggers if Disk usage exceeds the threshold."
+
+  dimensions = {
+    InstanceId = "${var.module_instance_id}"
+  }
+
+  alarm_actions = [var.sns_alert_topic_arn]
+  ok_actions    = [var.sns_ok_topic_arn]
+
+  tags = {
+    Name        = var.resource_owner["name"]
+    Owner       = var.resource_owner["owner"]
+    Environment = var.environment
+  }                     
+}
+
+
+resource "aws_cloudwatch_metric_alarm" "monitoring_latency" {
+  count = var.create_resource["monitoring"] ? 1 : 0
+
+  alarm_name          = "High-Latency"
+  comparison_operator = var.comparison
+  evaluation_periods  = var.evaluation_periods
+  metric_name         = var.metric_name["customLatency"]
+  namespace           = var.name_space["custom"]
+  period              = var.network_period
+  statistic           = "Average"
+  threshold           = 10
+  alarm_description   = "Triggers if Latency exceeds the threshold."
+
+  dimensions = {
+    InstanceId = "${var.module_instance_id}"
+  }
+  alarm_actions = [var.sns_alert_topic_arn]
+  ok_actions    = [var.sns_ok_topic_arn]
+  
   tags = {
     Name        = var.resource_owner["name"]
     Owner       = var.resource_owner["owner"]

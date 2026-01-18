@@ -39,7 +39,13 @@ resource "aws_instance" "sub_instance" {
   subnet_id              = var.sub_public_subnet
 
   key_name  = var.key_name
-  user_data = file("${path.root}/scripts/install_apps.sh")
+  user_data = templatefile("${path.root}/scripts/script.sh",
+      {
+      environment = var.environment
+      region      = var.region
+  })
+
+  #user_data = file("${path.root}/scripts/install_apps.sh")
   tags = {
     Name        = var.resource_owner["name"]
     Owner       = var.resource_owner["owner"]

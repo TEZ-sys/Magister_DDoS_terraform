@@ -3,17 +3,17 @@ variable "create_resource" {
   description = "True or false to create a resource"
   type        = map(bool)
   default = {
-    instance     = false
-    auto_scale   = false
+    instance     = true
+    auto_scale   = true
     load_balance = false
-    monitoring   = false
+    monitoring   = true
     network      = true
-    iam_role     = false
-    sns_topic    = false
+    iam_role     = true
+    sns_topic    = true
     logging      = false
-    dns          = true
-    s3_storage   = true
-    cdn          = true
+    dns          = false
+    s3_storage   = false
+    cdn          = false
   }
 }
 
@@ -22,14 +22,14 @@ variable "resource_owner" {
   type        = map(string)
   default = {
     name  = "dfutumai"
-    owner = " "
+    owner = "dfutumai@"
   }
 }
 
 variable "profile" {
   description = "AWS CLI profile to use"
   type        = string
-  default     = "dfutumai"
+  default     = "Terraform-AWS"
 }
 variable "region" {
   description = "AWS London-Region"
@@ -45,7 +45,7 @@ variable "key_name" {
 variable "email_address" {
   description = "Email address for sns"
   type        = string
-  default     = " "
+  default     = ""
 }
 #-----------------------------------compute--------------------------------------------------
 
@@ -149,10 +149,13 @@ variable "network_threshold" {
 variable "metric_name" {
   type = map(string)
   default = {
-    cpu         = "CPUUtilization"
-    network_in  = "NetworkIn"
-    network_out = "NetworkOut"
-    custom      = "DiskUsageRootPercent"
+    cpu           = "CPUUtilization"
+    network_in    = "NetworkIn"
+    network_out   = "NetworkOut"
+    customDisk    = "DiskUsageRootPercent"
+    customRAM     = "RAMUsed"
+    customLatency = "NetworkLatency"
+    customCPU     = "customCPUUtils"
   }
 }
 
@@ -177,7 +180,7 @@ variable "retention_days" {
 #-----------------------------------route-53----------------------------------------------------
 
 variable "domain_name" {
-  description = "The domain name (example.com)"
+  description = "The domain name Nebotask.com"
   type        = string
   default     = "Nebotask.com"
 }
@@ -185,10 +188,10 @@ variable "domain_name" {
 variable "dns_type" {
   description = "DNS record type (A, CNAME, etc.)"
   type        = string
-  default     = "NS"
+  default     = "NS"                                  
 }
 
-variable "dns_ttl" {
+    variable "dns_ttl" {
   description = "DNS record TTL"
   type        = number
   default     = 300
