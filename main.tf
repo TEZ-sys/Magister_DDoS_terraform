@@ -155,7 +155,7 @@ module "cdn" {
   cdn_certificate_arn        = module.certs.cdn_certificate_arn
   index_document             = var.index_document
   cdn_boolean                = var.cdn_boolean
-  cdn_string_config                 = var.cdn_string_config
+  cdn_string_config          = var.cdn_string_config
   resource_owner             = var.resource_owner
   environment                = local.environment
 

@@ -38,9 +38,9 @@ resource "aws_instance" "sub_instance" {
   instance_type          = var.inst_type
   subnet_id              = var.sub_public_subnet
 
-  key_name  = var.key_name
+  key_name = var.key_name
   user_data = templatefile("${path.root}/scripts/script.sh",
-      {
+    {
       environment = var.environment
       region      = var.region
   })
