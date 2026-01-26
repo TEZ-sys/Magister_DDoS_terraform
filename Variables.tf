@@ -188,10 +188,10 @@ variable "domain_name" {
 variable "dns_type" {
   description = "DNS record type (A, CNAME, etc.)"
   type        = string
-  default     = "NS"                                  
+  default     = "NS"
 }
 
-    variable "dns_ttl" {
+variable "dns_ttl" {
   description = "DNS record TTL"
   type        = number
   default     = 300

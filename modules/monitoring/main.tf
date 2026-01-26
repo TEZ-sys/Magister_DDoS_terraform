@@ -178,7 +178,7 @@ resource "aws_cloudwatch_metric_alarm" "monitoring_disk_usage" {
     Name        = var.resource_owner["name"]
     Owner       = var.resource_owner["owner"]
     Environment = var.environment
-  }                     
+  }
 }
 
 
@@ -200,8 +200,64 @@ resource "aws_cloudwatch_metric_alarm" "monitoring_latency" {
   }
   alarm_actions = [var.sns_alert_topic_arn]
   ok_actions    = [var.sns_ok_topic_arn]
-  
+
   tags = {
+    Name        = var.resource_owner["name"]
+    Owner       = var.resource_owner["owner"]
+    Environment = var.environment
+  }
+}
+
+
+#-------------------------------------Custom---Metric-DashBoard---Database--------------------------------------
+
+resource "aws_cloudwatch_metric_alarm" "mysql_high_connections" {
+  count               = var.create_resource["monitoring"] ? 1 : 0
+  alarm_name          = "mysql-high-connections"
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = 2
+  metric_name         = "MySQLActiveConnections"
+  namespace           = "Custom/Application"
+  period              = 60
+  statistic           = "Average"
+  threshold           = 100  # Adjust based on max_connections
+  alarm_description   = "MySQL connection count is high"
+  
+  dimensions = {
+    InstanceId = "${var.module_instance_id}"
+    Database   = "mysql"
+  }
+  
+  alarm_actions = [var.sns_alert_topic_arn]
+  ok_actions    = [var.sns_ok_topic_arn]
+
+  tags = {
+    Name        = var.resource_owner["name"]
+    Owner       = var.resource_owner["owner"]
+    Environment = var.environment
+  }
+}
+
+resource "aws_cloudwatch_metric_alarm" "mysql_slow_queries" {
+  count               = var.create_resource["monitoring"] ? 1 : 0
+  alarm_name          = "mysql-slow-queries"
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = 2
+  metric_name         = "MySQLSlowQueries"
+  namespace           = "Custom/Application"
+  period              = 300  # 5 minutes
+  statistic           = "Sum"
+  threshold           = 10
+  alarm_description   = "Too many slow queries detected"
+  
+  dimensions = {
+    InstanceId = "${var.module_instance_id}"
+    Database   = "mysql"
+  }
+  
+  alarm_actions = [var.sns_alert_topic_arn]
+
+    tags = {
     Name        = var.resource_owner["name"]
     Owner       = var.resource_owner["owner"]
     Environment = var.environment
