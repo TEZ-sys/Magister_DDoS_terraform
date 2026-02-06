@@ -31,7 +31,7 @@ resource "aws_iam_policy" "cw_put_metric" {
 }
 
 resource "aws_iam_policy" "cw_put_logs" {
-  count       = var.create_resource["iam_role"] ? 1 : 0
+  count       = var.create_resource["logging"] ? 1 : 0
   name        = "cw_put_logs"
   description = "Allow EC2 to push logs to CloudWatch logs"
   policy = jsonencode({
@@ -43,7 +43,10 @@ resource "aws_iam_policy" "cw_put_logs" {
           "logs:CreateLogGroup",
           "logs:CreateLogStream",
           "logs:PutLogEvents",
-          "logs:DescribeLogStreams"
+          "logs:DescribeLogStreams",
+          "logs:DescribeLogGroups",
+          "logs:FilterLogEvents",
+          "logs:GetLogEvents"
         ],
         Resource = "*"
       }
@@ -58,7 +61,7 @@ resource "aws_iam_role_policy_attachment" "cw_attach" {
 }
 
 resource "aws_iam_role_policy_attachment" "cw_logs_attach" {
-  count      = var.create_resource["iam_role"] ? 1 : 0
+  count      = var.create_resource["logging"] ? 1 : 0
   role       = aws_iam_role.monitoring_role[count.index].name
   policy_arn = aws_iam_policy.cw_put_logs[count.index].arn
 }

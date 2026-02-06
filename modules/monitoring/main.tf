@@ -220,14 +220,14 @@ resource "aws_cloudwatch_metric_alarm" "mysql_high_connections" {
   namespace           = "Custom/Application"
   period              = 60
   statistic           = "Average"
-  threshold           = 100  # Adjust based on max_connections
+  threshold           = 100 # Adjust based on max_connections
   alarm_description   = "MySQL connection count is high"
-  
+
   dimensions = {
     InstanceId = "${var.module_instance_id}"
     Database   = "mysql"
   }
-  
+
   alarm_actions = [var.sns_alert_topic_arn]
   ok_actions    = [var.sns_ok_topic_arn]
 
@@ -245,19 +245,44 @@ resource "aws_cloudwatch_metric_alarm" "mysql_slow_queries" {
   evaluation_periods  = 2
   metric_name         = "MySQLSlowQueries"
   namespace           = "Custom/Application"
-  period              = 300  # 5 minutes
+  period              = 300 # 5 minutes
   statistic           = "Sum"
   threshold           = 10
   alarm_description   = "Too many slow queries detected"
-  
+
   dimensions = {
     InstanceId = "${var.module_instance_id}"
     Database   = "mysql"
   }
-  
+
   alarm_actions = [var.sns_alert_topic_arn]
 
-    tags = {
+  tags = {
+    Name        = var.resource_owner["name"]
+    Owner       = var.resource_owner["owner"]
+    Environment = var.environment
+  }
+}
+
+
+# Alarm for high error rate from logs
+resource "aws_cloudwatch_metric_alarm" "error_log_alarm" {
+  count               = var.create_resource["logging"] ? 1 : 0
+  alarm_name          = "Test-High-Error-Count"
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = 1
+  metric_name         = "ErrorLogCount"
+  namespace           = "Custom/Logs"
+  period              = 300
+  statistic           = "Sum"
+  threshold           = 5
+  alarm_description   = "High number of errors detected in logs"
+  treat_missing_data  = "notBreaching"
+
+  alarm_actions = [var.sns_alert_topic_arn]
+  ok_actions    = [var.sns_ok_topic_arn]
+
+  tags = {
     Name        = var.resource_owner["name"]
     Owner       = var.resource_owner["owner"]
     Environment = var.environment

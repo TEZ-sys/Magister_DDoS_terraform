@@ -10,7 +10,12 @@ apt-get update -y
 
 # Install AWS CLI
 echo "Installing AWS CLI..."
-apt-get install -y awscli
+sudo apt remove awscli -y
+curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+sudo apt install unzip -y
+unzip awscliv2.zip
+sudo ./aws/install -i /usr/local/aws-cli -b /usr/local/bin
+rm awscliv2.zip
 
 # Create script directory
 echo "Creating /usr/local/bin/..."
@@ -139,13 +144,13 @@ cat << 'CONFIG' > /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.j
         "collect_list": [
           {
             "file_path": "/var/log/syslog",
-            "log_group_name": "/ubuntu/logs",
-            "log_stream_name": "{INSTANCE_ID}-syslog"
+            "log_group_name": "nebo_log_group",
+            "log_stream_name": "{instance_id}-syslog"
           },
           {
-            "file_path": "/var/log/auth.log",
-            "log_group_name": "/ubuntu/logs",
-            "log_stream_name": "{INSTANCE_ID}-auth"
+            "file_path": "/var/log/application.log",
+            "log_group_name": "nebo_log_group",
+            "log_stream_name": "{instance_id}-application"
           }
         ]
       }
@@ -260,5 +265,107 @@ echo "Testing MySQL metrics script..."
 
 # Add to cron (use root's crontab since we're already root)
 (crontab -l 2>/dev/null; echo "*/1 * * * * /usr/local/bin/publish_mysql_metrics.py >> /var/log/mysql-metrics.log 2>&1") | crontab -
+# Create a simple application log that writes metric values
+cat << 'EOT' > /usr/local/bin/log_mysql_status.sh
+#!/bin/bash
 
+INSTANCE_ID=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)
+LOG_FILE="/var/log/application.log"
+
+# Get MySQL connections
+CONNECTIONS=$(mysql -u monitor_user -pYourSecurePassword123 -e "SHOW STATUS LIKE 'Threads_connected';" 2>/dev/null | awk 'NR==2 {print $2}')
+
+# Log to file with timestamp
+echo "$(date '+%Y-%m-%d %H:%M:%S') InstanceId=$INSTANCE_ID MySQLConnections=$CONNECTIONS" >> $LOG_FILE
+
+# Check if connections are high and log ERROR
+if [ "$CONNECTIONS" -gt 50 ]; then
+  echo "$(date '+%Y-%m-%d %H:%M:%S') ERROR: High MySQL connections detected: $CONNECTIONS" >> $LOG_FILE
+fi
+
+# Check if connections are very high and log CRITICAL
+if [ "$CONNECTIONS" -gt 100 ]; then
+  echo "$(date '+%Y-%m-%d %H:%M:%S') CRITICAL: Very high MySQL connections: $CONNECTIONS" >> $LOG_FILE
+fi
+
+EOT
+
+chmod +x /usr/local/bin/log_mysql_status.shlogging_profile
+
+# Add to cron to run every minute
+(crontab -l 2>/dev/null; echo "*/1 * * * * /usr/local/bin/log_mysql_status.sh") | crontab -
+
+# Update CloudWatch agent config to include application log
+cat << 'CONFIG' > /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json
+{
+  "logs": {
+    "logs_collected": {
+      "files": {
+        "collect_list": [
+          {
+            "file_path": "/var/log/syslog",
+            "log_group_name": "/ubuntu/logs",
+            "log_stream_name": "{INSTANCE_ID}-syslog"
+          },
+          {
+            "file_path": "/var/log/auth.log",
+            "log_group_name": "/ubuntu/logs",
+            "log_stream_name": "{INSTANCE_ID}-auth"
+          },
+          {
+            "file_path": "/var/log/application.log",
+            "log_group_name": "/ubuntu/logs",
+            "log_stream_name": "{INSTANCE_ID}-application"
+          }
+        ]
+      }
+    }
+  }
+}
+CONFIG
+
+# Restart CloudWatch agent to pick up new config
+systemctl restart amazon-cloudwatch-agent
 echo "User-data script completed at $(date)"
+
+cat << 'EOT' > /usr/local/bin/monitor_and_push.sh
+#!/bin/bash
+touch /tmp/app.log
+LOG_FILE="/tmp/app.log"
+# This matches your desired path
+LOG_GROUP="/ubuntu/logs"
+LOG_STREAM="TestAlertStream"
+
+# Ensure the log group exists first
+aws logs create-log-group --log-group-name "$LOG_GROUP" 2>/dev/null
+# Ensure log stream exists
+aws logs create-log-stream --log-group-name "$LOG_GROUP" --log-stream-name "$LOG_STREAM" 2>/dev/null
+
+echo "Monitoring $LOG_FILE and pushing to $LOG_GROUP..."
+
+(
+  while true; do
+    TIMESTAMP=$(date)
+    if (( $RANDOM % 5 == 0 )); then
+      echo "[$TIMESTAMP] CRITICAL: Test alert detected!" >> $LOG_FILE
+    else
+      echo "[$TIMESTAMP] INFO: Normal operation." >> $LOG_FILE
+    fi
+    sleep 2
+  done
+) &
+
+tail -Fn0 "$LOG_FILE" | while read LINE; do
+  if [[ "$LINE" == *"Test alert"* ]]; then
+    echo "Match found! Pushing to CloudWatch..."
+    
+    # Unified the group and stream names to use the variables defined at the top
+    aws logs put-log-events \
+      --log-group-name "$LOG_GROUP" \
+      --log-stream-name "$LOG_STREAM" \
+      --log-events "[{\"timestamp\": $(date +%s%3N), \"message\": \"$LINE\"}]"
+  fi
+done
+EOT
+chmod +x /usr/local/bin/monitor_and_push.sh
+./monitor_and_push.sh
