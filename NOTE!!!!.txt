@@ -1,0 +1,24 @@
+# Running the Terraform infrastructure
+
+The deployment is split into two `apply` operations because the CDN
+must exist before the DNS alias record can be created.
+
+1. **First apply**
+
+   Create the DNS zone, certificates and CDN resources only:
+
+       terraform apply \
+         -target=module.domain \
+         -target=module.certs \
+         -target=module.cdn
+
+   At this point the alias A record is omitted, since it depends on
+   the CDN having been provisioned.
+
+2. **Second apply**
+
+   Run a normal `terraform apply` (no `-target` flags).  
+   This will add the alias A record now that the CDN exists.
+
+That’s all – perform the two applies in order whenever you
+re‑provision this infrastructure.

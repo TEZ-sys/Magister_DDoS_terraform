@@ -1,75 +1,181 @@
-
-terraform {
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 3.5.0"
+locals {
+  merged_tags = merge(
+    var.resource_owner,
+    {
+      Environment = var.environment
     }
+  )
+}
+
+#-----------------------------------------standart-instance---------------------------------------
+resource "aws_instance" "instance" {
+  count                  = var.create_resource["instance"] ? 1 : 0
+  vpc_security_group_ids = [aws_security_group.security_group[count.index].id]
+  ami                    = var.ami
+  instance_type          = var.inst_type
+  subnet_id              = var.public_subnet_id
+  iam_instance_profile   = var.monitoring_profile
+
+  key_name = var.key_name
+  user_data = templatefile("${path.root}/scripts/script.sh",
+    {
+      environment = var.environment
+      region      = var.region
+  })
+  tags = {
+    Name        = var.resource_owner["name"]
+    Owner       = var.resource_owner["owner"]
+    Environment = var.environment
   }
 }
-resource "aws_instance" "defender_instance" {
-  vpc_security_group_ids = [aws_security_group.defenders_security_group.id]
-  ami                    = coalesce(var.ami, data.aws_ami.latest_ubuntu.id)
+
+
+#-----------------------------------------Sub-instance---------------------------------------
+resource "aws_instance" "sub_instance" {
+  count                  = var.create_resource["instance"] ? 1 : 0
+  vpc_security_group_ids = [aws_security_group.security_group[count.index].id]
+  ami                    = var.ami
   instance_type          = var.inst_type
-  subnet_id              = aws_subnet.defenders_public_subnet.id
+  subnet_id              = var.sub_public_subnet
+  iam_instance_profile   = var.monitoring_profile
+
+  key_name = var.key_name
+  user_data = templatefile("${path.root}/scripts/script.sh",
+    {
+      environment = var.environment
+      region      = var.region
+  })
+
+  #user_data = file("${path.root}/scripts/install_apps.sh")
+  tags = {
+    Name        = var.resource_owner["name"]
+    Owner       = var.resource_owner["owner"]
+    Environment = var.environment
+  }
+}
+
+#-----------------------------------------Auto-scaling-group---------------------------------------
+resource "aws_launch_template" "launch_template" {
+  count         = var.create_resource["auto_scale"] ? 1 : 0
+  name_prefix   = "Default-London-instance"
+  image_id      = var.ami
+  instance_type = var.inst_type
+  network_interfaces {
+    security_groups = [aws_security_group.security_group[count.index].id]
+  }
   user_data = base64encode(<<-EOT
    #!/bin/bash
     apt-get update -y
     apt-get install nginx -y
     ufw allow 80
-    apt-get install slowhttptest -y
 EOT
-)
+  )
   tags = {
-    Name = "Defender"
+    Name        = var.resource_owner["name"]
+    Owner       = var.resource_owner["owner"]
+    Environment = var.environment
   }
 }
 
 
+resource "aws_autoscaling_group" "asg" {
+  count               = var.create_resource["auto_scale"] ? 1 : 0
+  desired_capacity    = var.scale_out_capacity["desired"]
+  min_size            = var.scale_out_capacity["min"]
+  max_size            = var.scale_out_capacity["max"]
+  vpc_zone_identifier = [var.sub_public_subnet]
 
-resource "aws_instance" "atatckers_instance" {
-  count                  = 10
-  vpc_security_group_ids = [aws_security_group.defenders_security_group.id]
-  ami                    = coalesce(var.ami, data.aws_ami.latest_ubuntu.id)
-  instance_type          = var.inst_type_attack
-  subnet_id              = aws_subnet.defenders_sub_public_subnet.id
+  launch_template {
+    id = aws_launch_template.launch_template[0].id
+  }
+}
 
-  user_data = <<-EOT
-    #!/bin/bash
-    sudo apt-get update
-    sudo apt-get install slowhttptest -y
-    sudo apt-get install -y hping3
-    TARGET_IP="${aws_instance.defender_instance.public_ip}" # Dynamically fetch defender's IP
-    echo "Target IP: $TARGET_IP" > /home/ubuntu/target_ip.txt
-   
-    while true; do 
-    sudo slowhttptest -H -u http://$TARGET_IP -t GET -c 100 -r 30 -p 20 -l 3600 
-    sleep 90
-    done
-    #ping $TARGET_IP -S 65000 -i 0.0000001
-  EOT
+resource "aws_autoscaling_policy" "scale_out" {
+  count                  = var.create_resource["monitoring"] ? 1 : 0
+  name                   = "scale_out-terraform-policy"
+  scaling_adjustment     = 1
+  adjustment_type        = "ChangeInCapacity"
+  cooldown               = 50
+  autoscaling_group_name = aws_autoscaling_group.asg[count.index].name
+}
 
-  depends_on = [
-    aws_instance.defender_instance
-  ]
+resource "aws_autoscaling_policy" "scale_in" {
+  count                  = var.create_resource["monitoring"] ? 1 : 0
+  name                   = "scale-in-terraform-policy"
+  scaling_adjustment     = -1
+  adjustment_type        = "ChangeInCapacity"
+  cooldown               = 100
+  autoscaling_group_name = aws_autoscaling_group.asg[count.index].name
+}
+
+#---------------------------------aws_security_group-----------------------------
+resource "aws_security_group" "security_group" {
+  count       = var.create_resource["instance"] ? 1 : 0
+  name_prefix = "Security-Group for standart"
+
+  vpc_id = var.vpc_id
+
+  dynamic "ingress" {
+    for_each = var.ports
+    content {
+      from_port   = ingress.value
+      to_port     = ingress.value
+      protocol    = "tcp"
+      cidr_blocks = var.CIDR
+    }
+  }
+  ingress {
+    from_port   = -1
+    to_port     = -1
+    protocol    = "icmp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = var.CIDR
+  }
 
   tags = {
-    Name        = "Attacker_instance_number${count.index + 1}"
-    Environment = "dev"
+    Name        = var.resource_owner["name"]
+    Owner       = var.resource_owner["owner"]
+    Environment = var.environment
   }
 }
 
 
+resource "aws_security_group" "alb_sg" {
+  count = var.create_resource["load_balance"] ? 1 : 0
+  name  = "alb_sg"
 
-data "aws_availability_zones" "all" {}
+  vpc_id = var.vpc_id
 
+  dynamic "ingress" {
+    for_each = var.ports
+    content {
+      from_port   = ingress.value
+      to_port     = ingress.value
+      protocol    = "tcp"
+      cidr_blocks = var.CIDR
+    }
+  }
+  ingress {
+    from_port   = -1
+    to_port     = -1
+    protocol    = "icmp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = var.CIDR
+  }
 
-data "aws_ami" "latest_ubuntu" {
-  owners      = ["099720109477"]
-  most_recent = true
-
-  filter {
-    name   = "name"
-    values = ["ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-*"]
+  tags = {
+    Name        = var.resource_owner["name"]
+    Owner       = var.resource_owner["owner"]
+    Environment = var.environment
   }
 }

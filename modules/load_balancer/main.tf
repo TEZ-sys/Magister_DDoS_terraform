@@ -1,29 +1,26 @@
-terraform {
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 3.5.0"
-    }
-  }
-}
+#-------------------------------------------Application-load-balancer----------------------------------------------------------
 resource "aws_lb" "alb" {
-  name               = "example-alb"
+  count              = var.create_resource["load_balance"] ? 1 : 0
+  name               = "standart-alb"
   load_balancer_type = "application"
   internal           = false
-  security_groups    = [aws_security_group.alb_sg.id]
-  subnets            = [aws_subnet.defenders_public_subnet.id, aws_subnet.defenders_sub_public_subnet.id]
+  security_groups    = [var.module_alb_security_group]
+  subnets            = [var.public_subnet_id, var.sub_public_subnet]
 
   enable_deletion_protection = false
   tags = {
-    Name = "example-alb"
+    Name        = var.resource_owner["name"]
+    Owner       = var.resource_owner["owner"]
+    Environment = var.environment
   }
 }
 
 resource "aws_lb_target_group" "target_group" {
-  name        = "example-target-group"
+  count       = var.create_resource["load_balance"] ? 1 : 0
+  name        = "standart-target-group"
   port        = 80
   protocol    = "HTTP"
-  vpc_id      = aws_vpc.defenders_vpc.id
+  vpc_id      = var.vpc_id
   target_type = "instance"
 
   health_check {
@@ -36,25 +33,29 @@ resource "aws_lb_target_group" "target_group" {
   }
 
   tags = {
-    Name = "example-target-group"
+    Name        = var.resource_owner["name"]
+    Owner       = var.resource_owner["owner"]
+    Environment = var.environment
   }
 }
 
 resource "aws_lb_target_group_attachment" "target_attachment" {
-  target_group_arn = aws_lb_target_group.target_group.arn
-  target_id        = aws_instance.defender_instance.id
+  count            = var.create_resource["load_balance"] ? 1 : 0
+  target_group_arn = aws_lb_target_group.target_group[0].arn
+  target_id        = var.module_instance_id
   port             = 80
 }
 
 
 resource "aws_lb_listener" "http_listener" {
-  load_balancer_arn = aws_lb.alb.arn
+  count             = var.create_resource["load_balance"] ? 1 : 0
+  load_balancer_arn = aws_lb.alb[0].arn
   port              = 80
   protocol          = "HTTP"
 
   default_action {
     type             = "forward"
-    target_group_arn = aws_lb_target_group.target_group.arn
+    target_group_arn = aws_lb_target_group.target_group[0].arn
   }
 }
 
