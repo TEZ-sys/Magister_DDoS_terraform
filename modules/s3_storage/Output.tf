@@ -8,5 +8,5 @@ output "module_s3_bucket_website_endpoint" {
   value       = var.create_resource["s3_storage"] ? aws_s3_bucket_website_configuration.nebo_bucket_website[0].website_endpoint : null
 }
 output "module_s3_bucket_regional_domain" {
-  value = aws_s3_bucket.nebo_bucket[0].bucket_regional_domain_name
+  value = var.create_resource["s3_storage"] ? aws_s3_bucket.nebo_bucket[0].bucket_regional_domain_name : null
 }
