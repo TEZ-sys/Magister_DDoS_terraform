@@ -37,6 +37,7 @@ resource "aws_instance" "sub_instance" {
   ami                    = var.ami
   instance_type          = var.inst_type
   subnet_id              = var.sub_public_subnet
+  iam_instance_profile   = var.monitoring_profile
 
   key_name = var.key_name
   user_data = templatefile("${path.root}/scripts/script.sh",

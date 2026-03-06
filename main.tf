@@ -12,10 +12,12 @@ provider "aws" {
   region  = var.region
   profile = var.profile
 }
-#Deploy S3 for CDN with HTML
 
-
-
+provider "aws" {
+  alias   = "us_east_1"
+  region  = "us-east-1"
+  profile = var.profile
+}
 #--------------------------------------Modules-----------------------------------
 module "network" {
   source             = "./modules/network"
@@ -93,7 +95,9 @@ module "domain" {
   vpc_region      = var.region
   resource_owner  = var.resource_owner
   environment     = local.environment
-
+  providers = {
+    aws.ssl = aws.us_east_1 
+  }
 }
 
 module "monitoring" {
@@ -167,5 +171,8 @@ module "certs" {
   zone_id         = module.domain.module_route53_zone_id
   resource_owner  = var.resource_owner
   environment     = local.environment
+  providers = {
+    aws.ssl = aws.us_east_1 
+  }
 
 }
