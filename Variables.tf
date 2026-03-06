@@ -1,3 +1,4 @@
+#-----------------------------------general--------------------------------------------------
 variable "create_resource" {
   description = "True or false to create a resource"
   type        = map(bool)
@@ -7,13 +8,55 @@ variable "create_resource" {
     load_balance = false
     monitoring   = false
     network      = false
+    iam_role     = false
+    sns_topic    = false
+    logging      = false
+    dns          = false
+    s3_storage   = false
+    cdn          = false
   }
 }
 
+variable "resource_owner" {
+  description = "Owner of resources"
+  type        = map(string)
+  default = {
+    name  = "dfutumai"
+    owner = "dfutumai@"
+  }
+}
 
+variable "profile" {
+  description = "AWS CLI profile to use"
+  type        = string
+  default     = "Terraform-AWS"
+}
 variable "region" {
   description = "AWS London-Region"
   type        = string
+}
+
+variable "key_name" {
+  description = "Key name for EC2 instances"
+  type        = string
+  default     = "DevOps-IaC"
+}
+
+variable "email_address" {
+  description = "Email address for sns"
+  type        = string
+  default     = ""
+}
+#-----------------------------------compute--------------------------------------------------
+
+variable "scaleout_capacity" {
+  description = "Amount of instances for each of ASG"
+  type        = map(number)
+  default = {
+    min     = 1
+    desired = 2
+    max     = 3
+  }
 }
 
 variable "ami" {
@@ -31,31 +74,43 @@ variable "ports" {
   description = "Allow ports"
   type        = list(any)
 }
+#-----------------------------------network--------------------------------------------------
+variable "availability_zones" {
+  description = "Availability zones"
+  type        = map(string)
+  default = {
+    az1 = "eu-west-2a"
+    az2 = "eu-west-2b"
+    az3 = "eu-west-2c"
+  }
+}
 
 variable "CIDR" {
   description = "CIDR for ingress and egress"
   type        = list(any)
 }
 
-variable "defenders_vpc_cidr" {
+variable "vpc_cidr" {
   description = "CIDR for VPC"
   type        = string
 }
 
-variable "defenders_public_subnet" {
+variable "public_subnet" {
   description = "CIDR for public subnet"
   type        = string
 }
 
-variable "defenders_private_subnet" {
+variable "private_subnet" {
   description = "CIDR for private subnet"
   type        = string
 }
 
-variable "defenders_sub_public_subnet" {
+variable "sub_public_subnet" {
   description = "CIDR for sub public subnet"
   type        = string
 }
+
+#-----------------------------------monitoring--------------------------------------------------
 
 variable "scale_in_period" {
   description = "Scale in preiod"
@@ -92,9 +147,16 @@ variable "network_threshold" {
 }
 
 variable "metric_name" {
-  description = "Sets metric name"
-  type        = list(any)
-
+  type = map(string)
+  default = {
+    cpu           = "CPUUtilization"
+    network_in    = "NetworkIn"
+    network_out   = "NetworkOut"
+    customDisk    = "DiskUsageRootPercent"
+    customRAM     = "RAMUsed"
+    customLatency = "NetworkLatency"
+    customCPU     = "customCPUUtils"
+  }
 }
 
 variable "comparison" {
@@ -103,6 +165,134 @@ variable "comparison" {
 }
 
 variable "name_space" {
-  description = "Name space"
+  type = map(string)
+  default = {
+    ec2    = "AWS/EC2"
+    custom = "Custom/System"
+  }
+}
+
+variable "retention_days" {
+  description = "Retention days for log group"
+  type        = number
+  default     = 1
+}
+#-----------------------------------route-53----------------------------------------------------
+
+variable "domain_name" {
+  description = "The domain name Nebotask.click"
   type        = string
+  default     = "dfutumainebotask.click"
+}
+
+variable "dns_type" {
+  description = "DNS record type (A, CNAME, etc.)"
+  type        = string
+  default     = "NS"
+}
+
+variable "dns_ttl" {
+  description = "DNS record TTL"
+  type        = number
+  default     = 300
+}
+
+#-----------------------------------s3-storage-variables-------------------------------------------
+variable "bucket_name" {
+  description = "S3 Bucket name"
+  type        = string
+  default     = "dfutumai-bucket-nebotask"
+}
+
+variable "bucket_acl" {
+  description = "S3 Bucket acl"
+  type        = string
+  default     = "private"
+}
+variable "index_document" {
+  description = "S3 Object key"
+  type        = string
+  default     = "index.html"
+}
+
+variable "error_document" {
+  description = "S3 Object key"
+  type        = string
+  default     = "error.html"
+}
+
+variable "content_type" {
+  description = "S3 Object content type"
+  type        = string
+  default     = "text/html"
+}
+#-----------------------------------CDN-------------------------------------------------------------
+variable "cdn_boolean" {
+  description = "Owner of resources"
+  type        = map(bool)
+  default = {
+    query_string                   = false
+    cloudfront_default_certificate = false
+    enabled                        = true
+    is_ipv6_enabled                = true
+  }
+}
+
+variable "cdn_string_config" {
+  description = "CDN string config"
+  type        = map(string)
+  default = {
+    minimum_protocol_version = "TLSv1.2_2021"
+    ssl_support_method       = "sni-only"
+    forward                  = "none"
+    restriction_type         = "none"
+  }
+}
+
+variable "cdn_ttl" {
+  description = "CDN TTL"
+  type        = map(number)
+  default = {
+    min     = 0
+    default = 3600
+    max     = 86400
+  }
+}
+
+variable "cdn_allowed_methods" {
+  description = "CDN allowed methods"
+  type        = list(string)
+  default     = ["GET", "HEAD", "OPTIONS", "PUT", "POST", "PATCH", "DELETE"]
+}
+
+variable "cdn_cached_methods" {
+  description = "CDN cached methods"
+  type        = list(string)
+  default     = ["GET", "HEAD"]
+}
+
+variable "cdn_viewer_protocol_policy" {
+  description = "CDN viewer protocol policy"
+  type        = string
+  default     = "redirect-to-https"
+}
+
+variable "cdn_s3_origin" {
+  description = "CDN S3 origin ID"
+  type        = string
+  default     = "s3-origin"
+}
+#----------------------------------Data Sources-----------------------------------------------------
+data "aws_ami" "latest_ubuntu" {
+  owners      = ["099720109477"]
+  most_recent = true
+  filter {
+    name   = "name"
+    values = ["ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-*"]
+  }
+}
+
+locals {
+  description = "Environments from workspaces"
+  environment = terraform.workspace
 }

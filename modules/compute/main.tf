@@ -1,65 +1,67 @@
-#-----------------------------------------Defence-instance---------------------------------------
-resource "aws_instance" "defender_instance" {
-  count                  = var.create_resource["compute"] ? 1 : 0
-  vpc_security_group_ids = [aws_security_groups.defenders_security_group.id]
+locals {
+  merged_tags = merge(
+    var.resource_owner,
+    {
+      Environment = var.environment
+    }
+  )
+}
+
+#-----------------------------------------standart-instance---------------------------------------
+resource "aws_instance" "instance" {
+  count                  = var.create_resource["instance"] ? 1 : 0
+  vpc_security_group_ids = [aws_security_group.security_group[count.index].id]
   ami                    = var.ami
   instance_type          = var.inst_type
   subnet_id              = var.public_subnet_id
-  user_data = base64encode(<<-EOT
-   #!/bin/bash
-    apt-get update -y
-    apt-get install nginx -y
-    ufw allow 80
-    apt-get install slowhttptest -y
-EOT
-  )
+  iam_instance_profile   = var.monitoring_profile
+
+  key_name = var.key_name
+  user_data = templatefile("${path.root}/scripts/script.sh",
+    {
+      environment = var.environment
+      region      = var.region
+  })
   tags = {
-    Name = "Defender"
+    Name        = var.resource_owner["name"]
+    Owner       = var.resource_owner["owner"]
+    Environment = var.environment
   }
 }
 
 
-#-----------------------------------------Attack-instance---------------------------------------
-resource "aws_instance" "atatckers_instance" {
-  count                  = var.create_resource["compute"] ? 1 : 0
-  vpc_security_group_ids = [aws_security_group.defenders_security_group.id]
+#-----------------------------------------Sub-instance---------------------------------------
+resource "aws_instance" "sub_instance" {
+  count                  = var.create_resource["instance"] ? 1 : 0
+  vpc_security_group_ids = [aws_security_group.security_group[count.index].id]
   ami                    = var.ami
   instance_type          = var.inst_type
   subnet_id              = var.sub_public_subnet
+  iam_instance_profile   = var.monitoring_profile
 
-  user_data = <<-EOT
-    #!/bin/bash
-    sudo apt-get update
-    sudo apt-get install slowhttptest -y
-    sudo apt-get install -y hping3
-    TARGET_IP="${aws_instance.defender_instance.public_ip}" # Dynamically fetch defender's IP
-    echo "Target IP: $TARGET_IP" > /home/ubuntu/target_ip.txt
-   
-    while true; do 
-    sudo slowhttptest -H -u http://$TARGET_IP -t GET -c 100 -r 30 -p 20 -l 3600 
-    sleep 90
-    done
-    #ping $TARGET_IP -S 65000 -i 0.0000001
-  EOT
+  key_name = var.key_name
+  user_data = templatefile("${path.root}/scripts/script.sh",
+    {
+      environment = var.environment
+      region      = var.region
+  })
 
-  depends_on = [
-    aws_instance.defender_instance
-  ]
-
+  #user_data = file("${path.root}/scripts/install_apps.sh")
   tags = {
-    Name        = "Attacker_instance_number${count.index + 1}"
-    Environment = "dev"
+    Name        = var.resource_owner["name"]
+    Owner       = var.resource_owner["owner"]
+    Environment = var.environment
   }
 }
 
 #-----------------------------------------Auto-scaling-group---------------------------------------
-resource "aws_launch_template" "defence_launch_template" {
+resource "aws_launch_template" "launch_template" {
   count         = var.create_resource["auto_scale"] ? 1 : 0
   name_prefix   = "Default-London-instance"
   image_id      = var.ami
   instance_type = var.inst_type
   network_interfaces {
-    security_groups = [aws_security_group.defenders_security_group.id]
+    security_groups = [aws_security_group.security_group[count.index].id]
   }
   user_data = base64encode(<<-EOT
    #!/bin/bash
@@ -68,17 +70,23 @@ resource "aws_launch_template" "defence_launch_template" {
     ufw allow 80
 EOT
   )
+  tags = {
+    Name        = var.resource_owner["name"]
+    Owner       = var.resource_owner["owner"]
+    Environment = var.environment
+  }
 }
 
-resource "aws_autoscaling_group" "defence_asg" {
+
+resource "aws_autoscaling_group" "asg" {
   count               = var.create_resource["auto_scale"] ? 1 : 0
-  desired_capacity    = 1
-  min_size            = 1
-  max_size            = 5
+  desired_capacity    = var.scale_out_capacity["desired"]
+  min_size            = var.scale_out_capacity["min"]
+  max_size            = var.scale_out_capacity["max"]
   vpc_zone_identifier = [var.sub_public_subnet]
 
   launch_template {
-    id = aws_launch_template.defence_launch_template.id
+    id = aws_launch_template.launch_template[0].id
   }
 }
 
@@ -88,7 +96,7 @@ resource "aws_autoscaling_policy" "scale_out" {
   scaling_adjustment     = 1
   adjustment_type        = "ChangeInCapacity"
   cooldown               = 50
-  autoscaling_group_name = aws_autoscaling_group.defence_asg.name
+  autoscaling_group_name = aws_autoscaling_group.asg[count.index].name
 }
 
 resource "aws_autoscaling_policy" "scale_in" {
@@ -97,12 +105,13 @@ resource "aws_autoscaling_policy" "scale_in" {
   scaling_adjustment     = -1
   adjustment_type        = "ChangeInCapacity"
   cooldown               = 100
-  autoscaling_group_name = aws_autoscaling_group.defence_asg.name
+  autoscaling_group_name = aws_autoscaling_group.asg[count.index].name
 }
 
 #---------------------------------aws_security_group-----------------------------
-resource "aws_security_group" "defenders_security_group" {
-  name_prefix = "Security-Group for Defenders"
+resource "aws_security_group" "security_group" {
+  count       = var.create_resource["instance"] ? 1 : 0
+  name_prefix = "Security-Group for standart"
 
   vpc_id = var.vpc_id
 
@@ -129,7 +138,9 @@ resource "aws_security_group" "defenders_security_group" {
   }
 
   tags = {
-    Name = "Defenders_Security_group"
+    Name        = var.resource_owner["name"]
+    Owner       = var.resource_owner["owner"]
+    Environment = var.environment
   }
 }
 
@@ -163,6 +174,8 @@ resource "aws_security_group" "alb_sg" {
   }
 
   tags = {
-    Name = "alb-sg"
+    Name        = var.resource_owner["name"]
+    Owner       = var.resource_owner["owner"]
+    Environment = var.environment
   }
 }

@@ -21,6 +21,10 @@ variable "public_subnet_id" {
   description = "CIDR for public subnet"
   type        = string
 }
+variable "resource_owner" {
+  description = "Owner of resources"
+  type        = map(string)
+}
 
 variable "sub_public_subnet" {
   description = "CIDR for public subnet"
@@ -28,11 +32,16 @@ variable "sub_public_subnet" {
 }
 
 variable "module_instance_id" {
-  description = "Instance_id of defender instance"
+  description = "Instance_id of standart instance"
   type        = string
+  default     = null
 }
 
 variable "module_alb_security_group" {
   description = "Security Group for ALB"
+  type        = string
+}
+variable "environment" {
+  description = "Production or Stage environment"
   type        = string
 }

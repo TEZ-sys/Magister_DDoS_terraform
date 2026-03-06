@@ -11,6 +11,21 @@ variable "scale_out_period" {
   type        = string
 }
 
+variable "sns_alert_topic_arn" {
+  description = "SNS arn topic ARN"
+  type        = string
+}
+
+variable "sns_ok_topic_arn" {
+  description = "SNS ok topic ARN"
+  type        = string
+}
+
+variable "resource_owner" {
+  description = "Owner of resources"
+  type        = map(string)
+}
+
 variable "scale_in_threshold" {
   description = "Scale in threshold"
   type        = string
@@ -38,7 +53,7 @@ variable "network_threshold" {
 
 variable "metric_name" {
   description = "Sets metric name"
-  type        = list(any)
+  type        = map(string)
 
 }
 
@@ -49,11 +64,11 @@ variable "comparison" {
 
 variable "name_space" {
   description = "Name space"
-  type        = string
+  type        = map(string)
 }
 
 variable "module_instance_id" {
-  description = "Instance_id of defender instance"
+  description = "Instance_id of standart instance"
   type        = string
 }
 
@@ -63,5 +78,9 @@ variable "module_scale_out_id" {
 }
 variable "module_scale_in_id" {
   description = "Scale in id"
+  type        = string
+}
+variable "environment" {
+  description = "Production or Stage environment"
   type        = string
 }
