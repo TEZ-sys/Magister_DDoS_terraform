@@ -3,13 +3,13 @@ variable "create_resource" {
   description = "True or false to create a resource"
   type        = map(bool)
   default = {
-    instance     = true
-    auto_scale   = true
+    instance     = false
+    auto_scale   = false
     load_balance = false
-    monitoring   = true
-    network      = true
-    iam_role     = true
-    sns_topic    = true
+    monitoring   = false
+    network      = false
+    iam_role     = false
+    sns_topic    = false
     logging      = false
     dns          = false
     s3_storage   = false
@@ -180,9 +180,9 @@ variable "retention_days" {
 #-----------------------------------route-53----------------------------------------------------
 
 variable "domain_name" {
-  description = "The domain name Nebotask.com"
+  description = "The domain name Nebotask.click"
   type        = string
-  default     = "Nebotask.com"
+  default     = "dfutumainebotask.click"
 }
 
 variable "dns_type" {
@@ -201,7 +201,7 @@ variable "dns_ttl" {
 variable "bucket_name" {
   description = "S3 Bucket name"
   type        = string
-  default     = "dfutumai-bucket"
+  default     = "dfutumai-bucket-nebotask"
 }
 
 variable "bucket_acl" {

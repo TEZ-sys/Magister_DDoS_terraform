@@ -43,3 +43,13 @@ variable "environment" {
   description = "Production or Stage environment"
   type        = string
 }
+
+variable "cdn_domain_name" {
+  description = "CloudFront distribution domain name"
+  type        = string
+}
+
+variable "cdn_hosted_zone_id" {
+  description = "CloudFront hosted zone ID"
+  type        = string
+}

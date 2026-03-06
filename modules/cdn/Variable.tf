@@ -62,3 +62,7 @@ variable "index_document" {
   description = "S3 Object key"
   type        = string
 }
+variable "domain_name" {
+  description = "Domain name for the CDN distribution"
+  type        = string
+}

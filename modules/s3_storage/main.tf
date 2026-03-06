@@ -10,9 +10,11 @@ resource "aws_s3_bucket" "nebo_bucket" {
 }
 
 resource "aws_s3_bucket_acl" "nebo_bucket_acl" {
-  count  = var.create_resource["s3_storage"] ? 1 : 0
-  bucket = aws_s3_bucket.nebo_bucket[0].id
-  acl    = var.bucket_acl
+  count      = var.create_resource["s3_storage"] ? 1 : 0
+  bucket     = aws_s3_bucket.nebo_bucket[0].id
+  acl        = var.bucket_acl
+  depends_on = [aws_s3_bucket_ownership_controls.nebo_bucket_ownership]
+
 }
 
 resource "aws_s3_bucket_website_configuration" "nebo_bucket_website" {
@@ -48,6 +50,14 @@ resource "aws_s3_bucket_policy" "cloudfront_access" {
   })
 }
 
+resource "aws_s3_bucket_ownership_controls" "nebo_bucket_ownership" {
+  count  = var.create_resource["s3_storage"] ? 1 : 0
+  bucket = aws_s3_bucket.nebo_bucket[0].id
+
+  rule {
+    object_ownership = "BucketOwnerPreferred"
+  }
+}
 resource "aws_s3_object" "index_html" {
   count        = var.create_resource["s3_storage"] ? 1 : 0
   bucket       = aws_s3_bucket.nebo_bucket[0].id

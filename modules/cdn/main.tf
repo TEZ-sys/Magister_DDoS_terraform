@@ -1,11 +1,13 @@
 resource "aws_cloudfront_distribution" "my_distribution" {
-  count = var.create_resource["cdn"] ? 1 : 0
+  count   = var.create_resource["cdn"] ? 1 : 0
+  aliases = [var.domain_name]
   origin {
     domain_name = var.cdn_s3_link
     origin_id   = var.cdn_s3_origin
     s3_origin_config {
       origin_access_identity = aws_cloudfront_origin_access_identity.my_oai[count.index].cloudfront_access_identity_path
     }
+
   }
 
   default_cache_behavior {

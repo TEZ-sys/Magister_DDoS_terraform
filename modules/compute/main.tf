@@ -88,13 +88,6 @@ resource "aws_autoscaling_group" "asg" {
   launch_template {
     id = aws_launch_template.launch_template[0].id
   }
-  tags = [
-    for key, value in local.merged_tags : {
-      key                 = key
-      value               = value
-      propagate_at_launch = true
-    }
-  ]
 }
 
 resource "aws_autoscaling_policy" "scale_out" {

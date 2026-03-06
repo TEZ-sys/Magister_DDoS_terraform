@@ -2,7 +2,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 4.49.0"
+      version = "~> 5.34.0"
     }
   }
 }
@@ -19,36 +19,38 @@ provider "aws" {
   profile = var.profile
 }
 #--------------------------------------Modules-----------------------------------
-module "network" {
-  source             = "./modules/network"
-  create_resource    = var.create_resource
-  region             = var.region
-  availability_zones = var.availability_zones
-  ports              = var.ports
-  CIDR               = var.CIDR
-  vpc_cidr           = var.vpc_cidr
-  public_subnet      = var.public_subnet
-  sub_public_subnet  = var.sub_public_subnet
-  private_subnet     = var.private_subnet
-  subnet_id          = module.network.module_public_subnet_id
-  resource_owner     = var.resource_owner
-  environment        = local.environment
+module "cdn" {
+  source                     = "./modules/cdn"
+  create_resource            = var.create_resource
+  bucket_name                = module.s3_storage.module_s3_bucket_name
+  cdn_s3_link                = module.s3_storage.module_s3_bucket_regional_domain
+  cdn_allowed_methods        = var.cdn_allowed_methods
+  cdn_cached_methods         = var.cdn_cached_methods
+  cdn_ttl                    = var.cdn_ttl
+  cdn_viewer_protocol_policy = var.cdn_viewer_protocol_policy
+  cdn_s3_origin              = var.cdn_s3_origin
+  cdn_certificate_arn        = module.certs.cdn_certificate_arn
+  index_document             = var.index_document
+  cdn_boolean                = var.cdn_boolean
+  cdn_string_config          = var.cdn_string_config
+  resource_owner             = var.resource_owner
+  environment                = local.environment
+  domain_name                = var.domain_name
+  providers = {
+    aws.ssl = aws.us_east_1
+  }
 }
-
-module "notification" {
-  source          = "./modules/notification"
-  resource_owner  = var.resource_owner
+module "certs" {
+  source          = "./modules/certs"
   create_resource = var.create_resource
-  email_address   = var.email_address
-  environment     = local.environment
-
-}
-
-module "iam" {
-  source          = "./modules/iam"
-  create_resource = var.create_resource
+  domain_name     = var.domain_name
+  zone_id         = module.domain.module_route53_zone_id
   resource_owner  = var.resource_owner
   environment     = local.environment
+  providers = {
+    aws.ssl = aws.us_east_1
+    aws     = aws
+  }
 
 }
 
@@ -71,6 +73,30 @@ module "compute" {
 
 }
 
+module "domain" {
+  source             = "./modules/domain"
+  create_resource    = var.create_resource
+  domain_name        = var.domain_name
+  dns_type           = var.dns_type
+  dns_ttl            = var.dns_ttl
+  vpc_id             = module.network.module_vpc_id
+  vpc_region         = var.region
+  resource_owner     = var.resource_owner
+  environment        = local.environment
+  cdn_domain_name    = module.cdn.module_cdn_domain_name
+  cdn_hosted_zone_id = module.cdn.module_cdn_hosted_zone_id
+  providers = {
+    aws.ssl = aws.us_east_1
+  }
+}
+
+module "iam" {
+  source          = "./modules/iam"
+  create_resource = var.create_resource
+  resource_owner  = var.resource_owner
+  environment     = local.environment
+
+}
 module "load_balancer" {
   source                    = "./modules/load_balancer"
   create_resource           = var.create_resource
@@ -85,19 +111,15 @@ module "load_balancer" {
   environment               = local.environment
 
 }
-module "domain" {
-  source          = "./modules/domain"
+
+module "logging" {
+  source          = "./modules/logging"
   create_resource = var.create_resource
-  domain_name     = var.domain_name
-  dns_type        = var.dns_type
-  dns_ttl         = var.dns_ttl
-  vpc_id          = module.network.module_vpc_id
-  vpc_region      = var.region
+  sns_topic_arn   = module.notification.module_output_sns_alert_topic_arn
   resource_owner  = var.resource_owner
+  retention_days  = var.retention_days
   environment     = local.environment
-  providers = {
-    aws.ssl = aws.us_east_1 
-  }
+
 }
 
 module "monitoring" {
@@ -123,12 +145,27 @@ module "monitoring" {
 
 }
 
-module "logging" {
-  source          = "./modules/logging"
-  create_resource = var.create_resource
-  sns_topic_arn   = module.notification.module_output_sns_alert_topic_arn
+module "network" {
+  source             = "./modules/network"
+  create_resource    = var.create_resource
+  region             = var.region
+  availability_zones = var.availability_zones
+  ports              = var.ports
+  CIDR               = var.CIDR
+  vpc_cidr           = var.vpc_cidr
+  public_subnet      = var.public_subnet
+  sub_public_subnet  = var.sub_public_subnet
+  private_subnet     = var.private_subnet
+  subnet_id          = module.network.module_public_subnet_id
+  resource_owner     = var.resource_owner
+  environment        = local.environment
+}
+
+module "notification" {
+  source          = "./modules/notification"
   resource_owner  = var.resource_owner
-  retention_days  = var.retention_days
+  create_resource = var.create_resource
+  email_address   = var.email_address
   environment     = local.environment
 
 }
@@ -144,35 +181,5 @@ module "s3_storage" {
   create_resource = var.create_resource
   resource_owner  = var.resource_owner
   environment     = local.environment
-
-}
-module "cdn" {
-  source                     = "./modules/cdn"
-  create_resource            = var.create_resource
-  bucket_name                = module.s3_storage.module_s3_bucket_name
-  cdn_s3_link                = module.s3_storage.module_s3_bucket_website_endpoint
-  cdn_allowed_methods        = var.cdn_allowed_methods
-  cdn_cached_methods         = var.cdn_cached_methods
-  cdn_ttl                    = var.cdn_ttl
-  cdn_viewer_protocol_policy = var.cdn_viewer_protocol_policy
-  cdn_s3_origin              = var.cdn_s3_origin
-  cdn_certificate_arn        = module.certs.cdn_certificate_arn
-  index_document             = var.index_document
-  cdn_boolean                = var.cdn_boolean
-  cdn_string_config          = var.cdn_string_config
-  resource_owner             = var.resource_owner
-  environment                = local.environment
-
-}
-module "certs" {
-  source          = "./modules/certs"
-  create_resource = var.create_resource
-  domain_name     = var.domain_name
-  zone_id         = module.domain.module_route53_zone_id
-  resource_owner  = var.resource_owner
-  environment     = local.environment
-  providers = {
-    aws.ssl = aws.us_east_1 
-  }
 
 }
