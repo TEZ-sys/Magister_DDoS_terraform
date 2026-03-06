@@ -2,23 +2,13 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-<<<<<<< HEAD
-      version = "~> 3.5.0"
-=======
       version = "~> 5.34.0"
->>>>>>> Hierarchy
     }
   }
 }
 
 #-----------------------------------provider_"aws" ------------------------------
 provider "aws" {
-<<<<<<< HEAD
-  region  = var.region[0]
-  profile = "Terraform-Diplom"
-
-}
-=======
   region  = var.region
   profile = var.profile
 }
@@ -193,4 +183,3 @@ module "s3_storage" {
   environment     = local.environment
 
 }
->>>>>>> Hierarchy
