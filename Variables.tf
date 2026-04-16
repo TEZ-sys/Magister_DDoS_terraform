@@ -3,13 +3,13 @@ variable "create_resource" {
   description = "True or false to create a resource"
   type        = map(bool)
   default = {
-    instance     = false
-    auto_scale   = false
+    instance     = true
+    auto_scale   = true
     load_balance = false
-    monitoring   = false
-    network      = false
-    iam_role     = false
-    sns_topic    = false
+    monitoring   = true
+    network      = true
+    iam_role     = true
+    sns_topic    = true
     logging      = false
     dns          = false
     s3_storage   = false
@@ -53,9 +53,9 @@ variable "scaleout_capacity" {
   description = "Amount of instances for each of ASG"
   type        = map(number)
   default = {
-    min     = 1
-    desired = 2
-    max     = 3
+    min     = 0
+    desired = 0
+    max     = 0
   }
 }
 
@@ -114,36 +114,47 @@ variable "sub_public_subnet" {
 
 variable "scale_in_period" {
   description = "Scale in preiod"
-  type        = string
+  type        = number
+  default     = 120
 }
 variable "scale_out_period" {
   description = "Scale out period"
-  type        = string
+  type        = number
+  default     = 60
 }
 
 variable "scale_in_threshold" {
   description = "Scale in threshold"
-  type        = string
+  type        = number
+  default     = 10
 }
 
 variable "scale_out_threshold" {
   description = "Scale out threshold"
-  type        = string
+  type        = number
+  default     = 20
 }
 
 variable "evaluation_periods" {
   description = "Evaluation period"
-  type        = string
+  type        = number
+  default     = 2
 }
 
 variable "network_period" {
   description = "Network perido"
-  type        = string
+  type        = number
+  default     = 300
 }
 
 variable "network_threshold" {
   description = "Network threshold"
-  type        = string
+  type        = number
+}
+variable "database_period" {
+  description = "Database period"
+  type        = number
+  default     = 60
 }
 
 variable "metric_name" {

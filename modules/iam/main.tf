@@ -24,7 +24,16 @@ resource "aws_iam_policy" "cw_put_metric" {
     Version = "2012-10-17"
     Statement = [{
       Effect   = "Allow"
-      Action   = ["cloudwatch:PutMetricData"]
+      Action   = [
+                "cloudwatch:PutMetricData",
+                "logs:CreateLogGroup",
+                "logs:CreateLogStream",
+                "logs:PutLogEvents",
+                "logs:DescribeLogStreams",
+                "logs:DescribeLogGroups",
+                "logs:FilterLogEvents",
+                "logs:GetLogEvents"
+          ]
       Resource = "*"
     }]
   })
