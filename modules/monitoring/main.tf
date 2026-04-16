@@ -400,6 +400,25 @@ resource "aws_cloudwatch_dashboard" "main_monitoring" {
           region = "eu-west-2"
           title  = "Error Log Frequency"
         } 
+      },
+      {
+        type   = "metric"
+        x      = 8
+        y      = 6
+        width  = 8
+        height = 6
+        properties = {
+          metrics = [
+            for id in compact([var.module_instance_id, var.module_sub_instance_id]) : 
+            [ "Custom/System", "DiskUsageRootPercent", "InstanceId", id ]
+          ]
+          period = tonumber(var.network_period)
+          stat   = "Average"
+          region = "eu-west-2"
+          title  = "Disk Usage (Root Partition %)"
+          view   = "timeSeries"
+          stacked = false
+        }
       }
     ]
   })

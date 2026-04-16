@@ -4,11 +4,11 @@ variable "create_resource" {
 }
 variable "scale_in_period" {
   description = "Scale in preiod"
-  type        = string
+  type        = number
 }
 variable "scale_out_period" {
   description = "Scale out period"
-  type        = string
+  type        = number
 }
 
 variable "sns_alert_topic_arn" {
@@ -28,12 +28,12 @@ variable "resource_owner" {
 
 variable "scale_in_threshold" {
   description = "Scale in threshold"
-  type        = string
+  type        = number
 }
 
 variable "scale_out_threshold" {
   description = "Scale out threshold"
-  type        = string
+  type        = number
 }
 
 variable "evaluation_periods" {
@@ -43,12 +43,12 @@ variable "evaluation_periods" {
 
 variable "network_period" {
   description = "Network perido"
-  type        = string
+  type        = number
 }
 
 variable "network_threshold" {
   description = "Network threshold"
-  type        = string
+  type        = number
 }
 
 variable "metric_name" {
@@ -71,6 +71,10 @@ variable "module_instance_id" {
   description = "Instance_id of standart instance"
   type        = string
 }
+variable "module_sub_instance_id" {
+  description = "Instance_id of sub instance"
+  type        = string
+}
 
 variable "module_scale_out_id" {
   description = "Scale out id"
@@ -83,4 +87,8 @@ variable "module_scale_in_id" {
 variable "environment" {
   description = "Production or Stage environment"
   type        = string
+}
+variable "database_period" {
+  description = "Database period"
+  type        = number
 }
