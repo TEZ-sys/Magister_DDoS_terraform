@@ -2,7 +2,10 @@ output "module_instance_id" {
   value       = var.create_resource["instance"] ? aws_instance.instance[0].id : null
   description = "ID of the standart instance"
 }
-
+output "module_sub_instance_id" {
+  value       = var.create_resource["instance"] ? aws_instance.sub_instance[0].id : null
+  description = "ID of the sub instance"
+}
 output "module_instance_ip" {
   value       = var.create_resource["instance"] ? aws_instance.instance[0].public_ip : null
   description = "Public IP of the standart instance"

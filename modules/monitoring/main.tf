@@ -1,7 +1,7 @@
-#----------------------------------standart-Monitoring-CPU-Scale-In-----------------------------------------------------
+#-----------------------------------Monitoring-CPU-Scale-In-----------------------------------------------------
 resource "aws_cloudwatch_metric_alarm" "monitoring_cpu_scale_in" {
   count                     = var.create_resource["monitoring"] ? 1 : 0
-  alarm_name                = "standart-monitoring-cpu"
+  alarm_name                = "scale-in-monitoring-cpu"
   comparison_operator       = var.comparison
   evaluation_periods        = var.evaluation_periods
   metric_name               = var.metric_name["cpu"]
@@ -9,7 +9,7 @@ resource "aws_cloudwatch_metric_alarm" "monitoring_cpu_scale_in" {
   period                    = var.scale_in_period
   statistic                 = "Average"
   threshold                 = var.scale_in_threshold
-  alarm_description         = "This metric monitors ec2 cpu utilization"
+  alarm_description         = "This metric monitors ec2 cpu utilization (Scale in Event)"
   insufficient_data_actions = []
 
   dimensions = {
@@ -24,11 +24,11 @@ resource "aws_cloudwatch_metric_alarm" "monitoring_cpu_scale_in" {
   }
 }
 
-#----------------------------------standart-Monitoring-CPU-Scale-Out-----------------------------------------------------
+#-----------------------------------Monitoring-CPU-Scale-Out-----------------------------------------------------
 resource "aws_cloudwatch_metric_alarm" "monitoring_cpu_scale_out" {
   count = var.create_resource["monitoring"] ? 1 : 0
 
-  alarm_name                = "standart-monitoring-cpu"
+  alarm_name                = "scale-out-monitoring-cpu"
   comparison_operator       = var.comparison
   evaluation_periods        = var.evaluation_periods
   metric_name               = var.metric_name["cpu"]
@@ -36,7 +36,7 @@ resource "aws_cloudwatch_metric_alarm" "monitoring_cpu_scale_out" {
   period                    = var.scale_out_period
   statistic                 = "Average"
   threshold                 = var.scale_out_threshold
-  alarm_description         = "This metric monitors ec2 cpu utilization"
+  alarm_description         = "This metric monitors ec2 cpu utilization (Scale out event)"
   insufficient_data_actions = []
 
   dimensions = {
@@ -50,7 +50,7 @@ resource "aws_cloudwatch_metric_alarm" "monitoring_cpu_scale_out" {
   }
 }
 
-#----------------------------------standart-Monitoring-Network--In-----------------------------------------------------
+#-----------------------------------Monitoring-Network--In-----------------------------------------------------
 resource "aws_cloudwatch_metric_alarm" "monitoring_custom_metric" {
   count = var.create_resource["monitoring"] ? 1 : 0
 
@@ -74,7 +74,7 @@ resource "aws_cloudwatch_metric_alarm" "monitoring_custom_metric" {
     Environment = var.environment
   }
 }
-#----------------------------------standart-Monitoring-Network--Out-----------------------------------------------------
+#-----------------------------------Monitoring-Network--Out-----------------------------------------------------
 resource "aws_cloudwatch_metric_alarm" "monitoring_network_out" {
   count = var.create_resource["monitoring"] ? 1 : 0
 
@@ -217,7 +217,7 @@ resource "aws_cloudwatch_metric_alarm" "mysql_high_connections" {
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = 2
   metric_name         = "MySQLActiveConnections"
-  namespace           = "Custom/Application"
+  namespace           = var.name_space["custom"]
   period              = 60
   statistic           = "Average"
   threshold           = 100 # Adjust based on max_connections
@@ -245,7 +245,7 @@ resource "aws_cloudwatch_metric_alarm" "mysql_slow_queries" {
   evaluation_periods  = 2
   metric_name         = "MySQLSlowQueries"
   namespace           = "Custom/Application"
-  period              = 300 # 5 minutes
+  period              = var.database_period
   statistic           = "Sum"
   threshold           = 10
   alarm_description   = "Too many slow queries detected"
@@ -273,12 +273,14 @@ resource "aws_cloudwatch_metric_alarm" "error_log_alarm" {
   evaluation_periods  = 1
   metric_name         = "ErrorLogCount"
   namespace           = "Custom/Logs"
-  period              = 300
+  period              = var.database_period
   statistic           = "Sum"
   threshold           = 5
   alarm_description   = "High number of errors detected in logs"
   treat_missing_data  = "notBreaching"
-
+  dimensions = {
+    InstanceId = "${var.module_instance_id}"
+  }
   alarm_actions = [var.sns_alert_topic_arn]
   ok_actions    = [var.sns_ok_topic_arn]
 
@@ -287,4 +289,118 @@ resource "aws_cloudwatch_metric_alarm" "error_log_alarm" {
     Owner       = var.resource_owner["owner"]
     Environment = var.environment
   }
+}
+
+resource "aws_cloudwatch_log_metric_filter" "error_log_filter" {
+  count               = var.create_resource["monitoring"] ? 1 : 0
+  name           = "ErrorCountFilter"
+  pattern        = "\"Test alert\""
+  log_group_name = "/ubuntu/logs"
+
+  metric_transformation {
+    name      = "ErrorLogCount"   
+    namespace = "Custom/Logs"
+    value     = "1"
+  }
+}
+
+resource "aws_cloudwatch_dashboard" "main_monitoring" {
+  count          = var.create_resource["monitoring"] ? 1 : 0
+  dashboard_name = "${var.environment}-System-Health"
+  
+  dashboard_body = jsonencode({
+    widgets = [
+      # CPU Utilization
+      {
+        type   = "metric"
+        x      = 0
+        y      = 0
+        width  = 12
+        height = 6
+        properties = {
+          metrics = [
+            for id in compact([var.module_instance_id, var.module_sub_instance_id]) : 
+            [ var.name_space["ec2"], var.metric_name["cpu"], "InstanceId", id ]
+          ]
+          period = tonumber(var.scale_in_period) 
+          stat   = "Average"
+          region = "eu-west-2"
+          title  = "CPU Utilization"
+        }
+      },
+      # RAM Usage
+      {
+        type   = "metric"
+        x      = 12
+        y      = 0
+        width  = 12
+        height = 6
+        properties = {
+          metrics = [
+            for id in compact([var.module_instance_id, var.module_sub_instance_id]) : 
+            [ var.name_space["custom"], var.metric_name["customRAM"], "InstanceId", id ]
+          ]
+          period = 60
+          stat   = "Average"
+          region = "eu-west-2"
+          title  = "Memory (RAM) Usage"
+        }
+      },
+      # NETWORK
+      {
+        type   = "metric"
+        x      = 0
+        y      = 6
+        width  = 12
+        height = 6
+        properties = {
+          metrics = [
+            for id in compact([var.module_instance_id, var.module_sub_instance_id]) : 
+            [ var.name_space["ec2"], var.metric_name["network_out"], "InstanceId", id ]
+          ]
+          period = tonumber(var.network_period)
+          stat   = "Average"
+          region = "eu-west-2"
+          title  = "Network Outbound"
+        }
+      },
+      # DB Performance
+      {
+        type   = "metric"
+        x      = 0
+        y      = 12
+        width  = 12
+        height = 6
+        properties = {
+          # Explicitly building the list of lists to avoid "flatten" logic errors
+          metrics = concat(
+            [for id in compact([var.module_instance_id, var.module_sub_instance_id]) : [ var.name_space["custom"], "MySQLActiveConnections", "InstanceId", id, "Database", "mysql" ]],
+            [for id in compact([var.module_instance_id, var.module_sub_instance_id]) : [ "Custom/Application", "MySQLSlowQueries", "InstanceId", id, "Database", "mysql" ]]
+          )
+          period = 60
+          stat   = "Sum"
+          region = "eu-west-2"
+          title  = "MySQL Performance"
+        }
+      },
+      # Error Logs
+      {
+        type   = "metric"
+        x      = 12
+        y      = 12
+        width  = 12
+        height = 6
+        properties = {
+          metrics = [
+            for id in compact([var.module_instance_id, var.module_sub_instance_id]) : 
+            [ "Custom/Logs", "ErrorLogCount", "InstanceId", id ]
+          ]
+          period = 60
+          stat   = "Sum"
+          region = "eu-west-2"
+          title  = "Error Log Frequency"
+        } 
+      }
+    ]
+  })
 }

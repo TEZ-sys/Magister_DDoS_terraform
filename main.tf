@@ -123,25 +123,27 @@ module "logging" {
 }
 
 module "monitoring" {
-  source              = "./modules/monitoring"
-  create_resource     = var.create_resource
-  name_space          = var.name_space
-  scale_in_period     = var.scale_in_period
-  scale_in_threshold  = var.scale_in_threshold
-  scale_out_period    = var.scale_out_period
-  scale_out_threshold = var.scale_out_threshold
-  evaluation_periods  = var.evaluation_periods
-  network_period      = var.network_period
-  network_threshold   = var.network_threshold
-  metric_name         = var.metric_name
-  comparison          = var.comparison
-  module_instance_id  = module.compute.module_instance_id
-  module_scale_out_id = module.compute.module_scale_out_id
-  module_scale_in_id  = module.compute.module_scale_in_id
-  resource_owner      = var.resource_owner
-  sns_alert_topic_arn = module.notification.module_output_sns_alert_topic_arn
-  sns_ok_topic_arn    = module.notification.module_output_sns_ok_topic_arn
-  environment         = local.environment
+  source                 = "./modules/monitoring"
+  create_resource        = var.create_resource
+  name_space             = var.name_space
+  scale_in_period        = var.scale_in_period
+  scale_in_threshold     = var.scale_in_threshold
+  scale_out_period       = var.scale_out_period
+  scale_out_threshold    = var.scale_out_threshold
+  database_period        = var.database_period
+  evaluation_periods     = var.evaluation_periods
+  network_period         = var.network_period
+  network_threshold      = var.network_threshold
+  metric_name            = var.metric_name
+  comparison             = var.comparison
+  module_instance_id     = module.compute.module_instance_id
+  module_sub_instance_id = module.compute.module_sub_instance_id
+  module_scale_out_id    = module.compute.module_scale_out_id
+  module_scale_in_id     = module.compute.module_scale_in_id
+  resource_owner         = var.resource_owner
+  sns_alert_topic_arn    = module.notification.module_output_sns_alert_topic_arn
+  sns_ok_topic_arn       = module.notification.module_output_sns_ok_topic_arn
+  environment            = local.environment
 
 }
 

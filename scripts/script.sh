@@ -3,6 +3,7 @@
 # Redirect output to log file for debugging
 exec > /var/log/user-data.log 2>&1
 echo "Starting user-data script at $(date)"
+LOG_GROUP_NAME="/ubuntu/logs"
 
 # Update packages
 echo "Updating packages..."
@@ -27,10 +28,10 @@ echo "Directory created: $(ls -ld /usr/local/bin/)"
 echo "Creating disk metrics script..."
 cat << 'EOT' > /usr/local/bin/publish_disk_metrics.sh
 #!/bin/bash
-
+TOKEN=$(curl -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")
 NAMESPACE="Custom/System"
 ENVIRONMENT="${environment}"
-INSTANCE_ID=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)
+INSTANCE_ID=$(curl -H "X-aws-ec2-metadata-token: $TOKEN" -s http://169.254.169.254/latest/meta-data/instance-id)
 REGION="${region}"
 
 DISK_USED=$(df / | tail -1 | awk '{print $5}' | tr -d '%')
@@ -51,9 +52,9 @@ chmod +x /usr/local/bin/publish_disk_metrics.sh
 
 cat << 'EOT' > /usr/local/bin/publish_CPU_metrics.sh
 #!/bin/bash
-
+TOKEN=$(curl -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")
 NAMESPACE="Custom/System"
-INSTANCE_ID=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)
+INSTANCE_ID=$(curl -H "X-aws-ec2-metadata-token: $TOKEN" -s http://169.254.169.254/latest/meta-data/instance-id)
 REGION="${region}"
 ENVIRONMENT="${environment}"
 
@@ -80,13 +81,13 @@ EOT
 
 chmod +x /usr/local/bin/publish_CPU_metrics.sh
 
-(crontab -l 2>/dev/null; echo "*/1 * * * * /usr/local/bin/publish_CPU_metrics.sh") | crontab -
+#(crontab -l 2>/dev/null; echo "*/1 * * * * /usr/local/bin/publish_CPU_metrics.sh") | crontab -
 
 cat << 'EOT' > /usr/local/bin/publish_RAM_metrics.sh
 #!/bin/bash
-
+TOKEN=$(curl -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")
 NAMESPACE="Custom/System"
-INSTANCE_ID=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)
+INSTANCE_ID=$(curl -H "X-aws-ec2-metadata-token: $TOKEN" -s http://169.254.169.254/latest/meta-data/instance-id)
 REGION="${region}"
 ENVIRONMENT="${environment}"
 
@@ -109,9 +110,9 @@ chmod +x /usr/local/bin/publish_RAM_metrics.sh
 
 cat << 'EOT' > /usr/local/bin/publish_Latency_metrics.sh
 #!/bin/bash
-
+TOKEN=$(curl -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")
 NAMESPACE="Custom/System"
-INSTANCE_ID=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)
+INSTANCE_ID=$(curl -H "X-aws-ec2-metadata-token: $TOKEN" -s http://169.254.169.254/latest/meta-data/instance-id)
 REGION="${region}"
 ENVIRONMENT="${environment}"
 
@@ -129,14 +130,14 @@ EOT
 
 chmod +x /usr/local/bin/publish_Latency_metrics.sh
 
-(crontab -l 2>/dev/null; echo "*/1 * * * * /usr/local/bin/publish_Latency_metrics.sh") | crontab -
+#(crontab -l 2>/dev/null; echo "*/1 * * * * /usr/local/bin/publish_Latency_metrics.sh") | crontab -
 
 echo "Installing CloudWatch agent..."
 wget -q https://s3.amazonaws.com/amazoncloudwatch-agent/ubuntu/amd64/latest/amazon-cloudwatch-agent.deb -O /tmp/amazon-cloudwatch-agent.deb
 dpkg -i /tmp/amazon-cloudwatch-agent.deb
 apt-get install -f -y 
 
-cat << 'CONFIG' > /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json
+cat << CONFIG > /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json
 {
   "logs": {
     "logs_collected": {
@@ -144,13 +145,23 @@ cat << 'CONFIG' > /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.j
         "collect_list": [
           {
             "file_path": "/var/log/syslog",
-            "log_group_name": "nebo_log_group",
+            "log_group_name": "$LOG_GROUP_NAME",
             "log_stream_name": "{instance_id}-syslog"
           },
           {
+            "file_path": "/var/log/auth.log",
+            "log_group_name": "$LOG_GROUP_NAME",
+            "log_stream_name": "{instance_id}-auth"
+          },
+          {
             "file_path": "/var/log/application.log",
-            "log_group_name": "nebo_log_group",
+            "log_group_name": "$LOG_GROUP_NAME",
             "log_stream_name": "{instance_id}-application"
+          },
+          {
+            "file_path": "/var/log/user-data.log",
+            "log_group_name": "$LOG_GROUP_NAME",
+            "log_stream_name": "{instance_id}-userdata"
           }
         ]
       }
@@ -193,9 +204,22 @@ import mysql.connector
 from datetime import datetime
 import os
 import sys
+import requests
+
 
 try:
-    cloudwatch = boto3.client('cloudwatch', region_name='${region}')
+    token_url = "http://169.254.169.254/latest/api/token"
+    token_headers = {"X-aws-ec2-metadata-token-ttl-seconds": "21600"}
+    token_response = requests.put(token_url, headers=token_headers, timeout=5)
+    token = token_response.text
+
+    id_url = "http://169.254.169.254/latest/meta-data/instance-id"
+    id_headers = {"X-aws-ec2-metadata-token": token}
+    INSTANCE_ID = requests.get(id_url, headers=id_headers, timeout=5).text.strip()
+
+    cloudwatch = boto3.client('cloudwatch', region_name='eu-west-2')
+
+
     
     db = mysql.connector.connect(
         host="localhost",
@@ -204,7 +228,7 @@ try:
     )
     
     NAMESPACE = 'Custom/Application'
-    INSTANCE_ID = os.popen('curl -s http://169.254.169.254/latest/meta-data/instance-id').read().strip()
+
     
     def get_mysql_status(variable_name):
         cursor = db.cursor()
@@ -268,8 +292,8 @@ echo "Testing MySQL metrics script..."
 # Create a simple application log that writes metric values
 cat << 'EOT' > /usr/local/bin/log_mysql_status.sh
 #!/bin/bash
-
-INSTANCE_ID=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)
+TOKEN=$(curl -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")
+INSTANCE_ID=$(curl -H "X-aws-ec2-metadata-token: $TOKEN" -s http://169.254.169.254/latest/meta-data/instance-id)
 LOG_FILE="/var/log/application.log"
 
 # Get MySQL connections
@@ -290,43 +314,11 @@ fi
 
 EOT
 
-chmod +x /usr/local/bin/log_mysql_status.shlogging_profile
+chmod +x /usr/local/bin/log_mysql_status.sh
 
 # Add to cron to run every minute
 (crontab -l 2>/dev/null; echo "*/1 * * * * /usr/local/bin/log_mysql_status.sh") | crontab -
 
-# Update CloudWatch agent config to include application log
-cat << 'CONFIG' > /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json
-{
-  "logs": {
-    "logs_collected": {
-      "files": {
-        "collect_list": [
-          {
-            "file_path": "/var/log/syslog",
-            "log_group_name": "/ubuntu/logs",
-            "log_stream_name": "{INSTANCE_ID}-syslog"
-          },
-          {
-            "file_path": "/var/log/auth.log",
-            "log_group_name": "/ubuntu/logs",
-            "log_stream_name": "{INSTANCE_ID}-auth"
-          },
-          {
-            "file_path": "/var/log/application.log",
-            "log_group_name": "/ubuntu/logs",
-            "log_stream_name": "{INSTANCE_ID}-application"
-          }
-        ]
-      }
-    }
-  }
-}
-CONFIG
-
-# Restart CloudWatch agent to pick up new config
-systemctl restart amazon-cloudwatch-agent
-echo "User-data script completed at $(date)"
 
 cat << 'EOT' > /usr/local/bin/monitor_and_push.sh
 #!/bin/bash
@@ -368,4 +360,11 @@ tail -Fn0 "$LOG_FILE" | while read LINE; do
 done
 EOT
 chmod +x /usr/local/bin/monitor_and_push.sh
-./monitor_and_push.sh
+(crontab -l 2>/dev/null; echo "*/1 * * * * /usr/local/bin/monitor_and_push.sh") | crontab -
+
+
+cat << 'EOF' | sudo crontab -
+*/1 * * * * /usr/local/bin/publish_CPU_metrics.sh >> /var/log/cron_monitoring.log 2>&1
+*/1 * * * * /usr/local/bin/publish_RAM_metrics.sh >> /var/log/cron_monitoring.log 2>&1
+*/1 * * * * /usr/local/bin/publish_mysql_metrics.py >> /var/log/cron_monitoring.log 2>&1
+EOF
