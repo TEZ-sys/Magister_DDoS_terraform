@@ -48,8 +48,6 @@ EOT
 
 chmod +x /usr/local/bin/publish_disk_metrics.sh
 
-(crontab -l 2>/dev/null; echo "*/1 * * * * /usr/local/bin/publish_disk_metrics.sh") | crontab -
-
 cat << 'EOT' > /usr/local/bin/publish_CPU_metrics.sh
 #!/bin/bash
 TOKEN=$(curl -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")
@@ -80,8 +78,6 @@ aws cloudwatch put-metric-data \
 EOT
 
 chmod +x /usr/local/bin/publish_CPU_metrics.sh
-
-#(crontab -l 2>/dev/null; echo "*/1 * * * * /usr/local/bin/publish_CPU_metrics.sh") | crontab -
 
 cat << 'EOT' > /usr/local/bin/publish_RAM_metrics.sh
 #!/bin/bash
@@ -129,8 +125,6 @@ aws cloudwatch put-metric-data \
 EOT
 
 chmod +x /usr/local/bin/publish_Latency_metrics.sh
-
-#(crontab -l 2>/dev/null; echo "*/1 * * * * /usr/local/bin/publish_Latency_metrics.sh") | crontab -
 
 echo "Installing CloudWatch agent..."
 wget -q https://s3.amazonaws.com/amazoncloudwatch-agent/ubuntu/amd64/latest/amazon-cloudwatch-agent.deb -O /tmp/amazon-cloudwatch-agent.deb
@@ -287,8 +281,6 @@ chmod +x /usr/local/bin/publish_mysql_metrics.py
 echo "Testing MySQL metrics script..."
 /usr/local/bin/publish_mysql_metrics.py
 
-# Add to cron (use root's crontab since we're already root)
-(crontab -l 2>/dev/null; echo "*/1 * * * * /usr/local/bin/publish_mysql_metrics.py >> /var/log/mysql-metrics.log 2>&1") | crontab -
 # Create a simple application log that writes metric values
 cat << 'EOT' > /usr/local/bin/log_mysql_status.sh
 #!/bin/bash
@@ -317,8 +309,6 @@ EOT
 chmod +x /usr/local/bin/log_mysql_status.sh
 
 # Add to cron to run every minute
-(crontab -l 2>/dev/null; echo "*/1 * * * * /usr/local/bin/log_mysql_status.sh") | crontab -
-
 
 cat << 'EOT' > /usr/local/bin/monitor_and_push.sh
 #!/bin/bash
@@ -360,11 +350,16 @@ tail -Fn0 "$LOG_FILE" | while read LINE; do
 done
 EOT
 chmod +x /usr/local/bin/monitor_and_push.sh
-(crontab -l 2>/dev/null; echo "*/1 * * * * /usr/local/bin/monitor_and_push.sh") | crontab -
 
+nohup /usr/local/bin/monitor_and_push.sh > /var/log/monitor_push.log 2>&1 &
 
-cat << 'EOF' | sudo crontab -
+cat << 'EOF' | crontab -
 */1 * * * * /usr/local/bin/publish_CPU_metrics.sh >> /var/log/cron_monitoring.log 2>&1
 */1 * * * * /usr/local/bin/publish_RAM_metrics.sh >> /var/log/cron_monitoring.log 2>&1
+*/1 * * * * /usr/local/bin/publish_disk_metrics.sh >> /var/log/cron_monitoring.log 2>&1
+*/1 * * * * /usr/local/bin/publish_Latency_metrics.sh >> /var/log/cron_monitoring.log 2>&1
 */1 * * * * /usr/local/bin/publish_mysql_metrics.py >> /var/log/cron_monitoring.log 2>&1
+*/1 * * * * /usr/local/bin/log_mysql_status.sh >> /var/log/mysql_status_cron.log 2>&1
 EOF
+
+echo "User-data script finished successfully at $(date)"
