@@ -178,8 +178,9 @@ variable "comparison" {
 variable "name_space" {
   type = map(string)
   default = {
-    ec2    = "AWS/EC2"
-    custom = "Custom/System"
+    ec2        = "AWS/EC2"
+    custom     = "Custom/System"
+    custom_app = "Custom/Application"
   }
 }
 

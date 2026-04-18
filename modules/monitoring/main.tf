@@ -126,8 +126,8 @@ resource "aws_cloudwatch_metric_alarm" "Cloud_watch_and_sns" {
 }
 
 
-#-------------------------------------Custom---Metric-DashBoard-----------------------------------------
-resource "aws_cloudwatch_metric_alarm" "monitoring_ram_usage" {
+#-------------------------------------RAM-Usage----------------------------------------
+resource "aws_cloudwatch_metric_alarm" "c" {
   count = var.create_resource["monitoring"] ? 1 : 0
 
   alarm_name          = "High-RAM-Usage"
@@ -153,6 +153,7 @@ resource "aws_cloudwatch_metric_alarm" "monitoring_ram_usage" {
     Environment = var.environment
   }
 }
+#-------------------------------------Disk-Usage----------------------------------------
 
 resource "aws_cloudwatch_metric_alarm" "monitoring_disk_usage" {
   count = var.create_resource["monitoring"] ? 1 : 0
@@ -181,6 +182,7 @@ resource "aws_cloudwatch_metric_alarm" "monitoring_disk_usage" {
   }
 }
 
+#-------------------------------------Latency-----------------------------------------
 
 resource "aws_cloudwatch_metric_alarm" "monitoring_latency" {
   count = var.create_resource["monitoring"] ? 1 : 0
@@ -208,23 +210,19 @@ resource "aws_cloudwatch_metric_alarm" "monitoring_latency" {
   }
 }
 
-
-#-------------------------------------Custom---Metric-DashBoard---Database--------------------------------------
-
+#-------------------------------------Mysql-high-connections-----------------------------------
 resource "aws_cloudwatch_metric_alarm" "mysql_high_connections" {
   count               = var.create_resource["monitoring"] ? 1 : 0
   alarm_name          = "mysql-high-connections"
-  comparison_operator = "GreaterThanThreshold"
+  comparison_operator = "GreaterThanOrEqualToThreshold"
   evaluation_periods  = 2
   metric_name         = "MySQLActiveConnections"
-  namespace           = var.name_space["custom"]
+  namespace           = "Custom/Application"
   period              = 60
   statistic           = "Average"
-  threshold           = 100 # Adjust based on max_connections
-  alarm_description   = "MySQL connection count is high"
-
+  threshold           = 1
   dimensions = {
-    InstanceId = "${var.module_instance_id}"
+    InstanceId = var.module_instance_id
     Database   = "mysql"
   }
 
@@ -237,17 +235,17 @@ resource "aws_cloudwatch_metric_alarm" "mysql_high_connections" {
     Environment = var.environment
   }
 }
-
+#-------------------------------------------mysql-slow-queries------------------------------------
 resource "aws_cloudwatch_metric_alarm" "mysql_slow_queries" {
   count               = var.create_resource["monitoring"] ? 1 : 0
   alarm_name          = "mysql-slow-queries"
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = 2
   metric_name         = "MySQLSlowQueries"
-  namespace           = "Custom/Application"
+  namespace           = var.name_space["custom_app"]
   period              = var.database_period
   statistic           = "Sum"
-  threshold           = 10
+  threshold           = 5
   alarm_description   = "Too many slow queries detected"
 
   dimensions = {
@@ -265,7 +263,7 @@ resource "aws_cloudwatch_metric_alarm" "mysql_slow_queries" {
 }
 
 
-# Alarm for high error rate from logs
+#---------------------------------------Error-log-alarm---------------------------------------------
 resource "aws_cloudwatch_metric_alarm" "error_log_alarm" {
   count               = var.create_resource["logging"] ? 1 : 0
   alarm_name          = "Test-High-Error-Count"
@@ -275,7 +273,7 @@ resource "aws_cloudwatch_metric_alarm" "error_log_alarm" {
   namespace           = "Custom/Logs"
   period              = var.database_period
   statistic           = "Sum"
-  threshold           = 5
+  threshold           = 20
   alarm_description   = "High number of errors detected in logs"
   treat_missing_data  = "notBreaching"
   dimensions = {
@@ -290,24 +288,83 @@ resource "aws_cloudwatch_metric_alarm" "error_log_alarm" {
     Environment = var.environment
   }
 }
-
+#--------------------------------------Error-log-filet---------------------------------------------
 resource "aws_cloudwatch_log_metric_filter" "error_log_filter" {
-  count               = var.create_resource["monitoring"] ? 1 : 0
+  count          = var.create_resource["monitoring"] ? 1 : 0
   name           = "ErrorCountFilter"
   pattern        = "\"Test alert\""
   log_group_name = "/ubuntu/logs"
 
   metric_transformation {
-    name      = "ErrorLogCount"   
+    name      = "ErrorLogCount"
     namespace = "Custom/Logs"
     value     = "1"
   }
 }
+#--------------------------------Anomaly-Detection-----------------------------------------------------
+resource "aws_cloudwatch_metric_alarm" "cpu_anomaly_alarm" {
+  count               = var.create_resource["monitoring"] ? 1 : 0
+  alarm_name          = "CPU-Anomaly-Detection"
+  comparison_operator = "LessThanLowerOrGreaterThanUpperThreshold"
+  evaluation_periods  = 2
+  threshold_metric_id = "ad1"
+  alarm_actions       = [var.sns_alert_topic_arn]
 
+  metric_query {
+    id          = "m1"
+    return_data = true 
+    metric {
+      metric_name = var.metric_name["cpu"]
+      namespace   = var.name_space["ec2"]
+      period      = 600
+      stat        = "Average"
+      dimensions = { InstanceId = var.module_instance_id }
+    }
+  }
+
+  metric_query {
+    id          = "ad1"
+    expression  = "ANOMALY_DETECTION_BAND(m1, 2)"
+    label       = "CPU (Expected Range)"
+    return_data = true 
+  }
+}
+#--------------------------------------Composite-Alarms---------------------------------------------
+resource "aws_cloudwatch_composite_alarm" "resource_composite_alarm" {
+  count             = var.create_resource["monitoring"] ? 1 : 0
+  alarm_name        = "Resource-Composite-Alarm"
+  alarm_description = "Composite alarm that triggers if any condition for Hardware or resources are met."
+  alarm_rule        = "ALARM(${aws_cloudwatch_metric_alarm.monitoring_network_out[0].alarm_name}) OR ALARM(${aws_cloudwatch_metric_alarm.cpu_anomaly_alarm[0].alarm_name}) OR ALARM(${aws_cloudwatch_metric_alarm.monitoring_disk_usage[0].alarm_name}) OR ALARM(${aws_cloudwatch_metric_alarm.monitoring_disk_usage[0].alarm_name})"
+  alarm_actions     = [var.sns_alert_topic_arn]
+  ok_actions        = [var.sns_ok_topic_arn]
+
+  tags = {
+    Name        = var.resource_owner["name"]
+    Owner       = var.resource_owner["owner"]
+    Environment = var.environment
+  }
+}
+
+resource "aws_cloudwatch_composite_alarm" "mysql_composite_alarm" {
+  count             = var.create_resource["monitoring"] ? 1 : 0
+  alarm_name        = "Mysql-Composite-Alarm"
+  alarm_description = "Composite alarm that triggers if any condition is met for MYSQL."
+  alarm_rule        = "ALARM(${aws_cloudwatch_metric_alarm.mysql_high_connections[0].alarm_name}) OR ALARM(${aws_cloudwatch_metric_alarm.mysql_slow_queries[0].alarm_name})"
+  alarm_actions     = [var.sns_alert_topic_arn]
+  ok_actions        = [var.sns_ok_topic_arn]
+
+  tags = {
+    Name        = var.resource_owner["name"]
+    Owner       = var.resource_owner["owner"]
+    Environment = var.environment
+  }
+}
+
+#--------------------------------------Custom---Metric-DashBoard---Database--------------------------------------
 resource "aws_cloudwatch_dashboard" "main_monitoring" {
   count          = var.create_resource["monitoring"] ? 1 : 0
   dashboard_name = "${var.environment}-System-Health"
-  
+
   dashboard_body = jsonencode({
     widgets = [
       # CPU Utilization
@@ -319,10 +376,10 @@ resource "aws_cloudwatch_dashboard" "main_monitoring" {
         height = 6
         properties = {
           metrics = [
-            for id in compact([var.module_instance_id, var.module_sub_instance_id]) : 
-            [ var.name_space["ec2"], var.metric_name["cpu"], "InstanceId", id ]
+            for id in compact([var.module_instance_id, var.module_sub_instance_id]) :
+            [var.name_space["ec2"], var.metric_name["cpu"], "InstanceId", id]
           ]
-          period = tonumber(var.scale_in_period) 
+          period = tonumber(var.scale_in_period)
           stat   = "Average"
           region = "eu-west-2"
           title  = "CPU Utilization"
@@ -337,8 +394,8 @@ resource "aws_cloudwatch_dashboard" "main_monitoring" {
         height = 6
         properties = {
           metrics = [
-            for id in compact([var.module_instance_id, var.module_sub_instance_id]) : 
-            [ var.name_space["custom"], var.metric_name["customRAM"], "InstanceId", id ]
+            for id in compact([var.module_instance_id, var.module_sub_instance_id]) :
+            [var.name_space["custom"], var.metric_name["customRAM"], "InstanceId", id]
           ]
           period = 60
           stat   = "Average"
@@ -355,8 +412,8 @@ resource "aws_cloudwatch_dashboard" "main_monitoring" {
         height = 6
         properties = {
           metrics = [
-            for id in compact([var.module_instance_id, var.module_sub_instance_id]) : 
-            [ var.name_space["ec2"], var.metric_name["network_out"], "InstanceId", id ]
+            for id in compact([var.module_instance_id, var.module_sub_instance_id]) :
+            [var.name_space["ec2"], var.metric_name["network_out"], "InstanceId", id]
           ]
           period = tonumber(var.network_period)
           stat   = "Average"
@@ -374,8 +431,8 @@ resource "aws_cloudwatch_dashboard" "main_monitoring" {
         properties = {
           # Explicitly building the list of lists to avoid "flatten" logic errors
           metrics = concat(
-            [for id in compact([var.module_instance_id, var.module_sub_instance_id]) : [ var.name_space["custom"], "MySQLActiveConnections", "InstanceId", id, "Database", "mysql" ]],
-            [for id in compact([var.module_instance_id, var.module_sub_instance_id]) : [ "Custom/Application", "MySQLSlowQueries", "InstanceId", id, "Database", "mysql" ]]
+            [for id in compact([var.module_instance_id, var.module_sub_instance_id]) : ["Custom/Application", "MySQLActiveConnections", "InstanceId", id, "Database", "mysql"]],
+            [for id in compact([var.module_instance_id, var.module_sub_instance_id]) : ["Custom/Application", "MySQLSlowQueries", "InstanceId", id, "Database", "mysql"]]
           )
           period = 60
           stat   = "Sum"
@@ -392,14 +449,14 @@ resource "aws_cloudwatch_dashboard" "main_monitoring" {
         height = 6
         properties = {
           metrics = [
-            for id in compact([var.module_instance_id, var.module_sub_instance_id]) : 
-            [ "Custom/Logs", "ErrorLogCount", "InstanceId", id ]
+            for id in compact([var.module_instance_id, var.module_sub_instance_id]) :
+            ["Custom/Logs", "ErrorLogCount", "InstanceId", id]
           ]
           period = 60
           stat   = "Sum"
           region = "eu-west-2"
           title  = "Error Log Frequency"
-        } 
+        }
       },
       {
         type   = "metric"
@@ -409,14 +466,14 @@ resource "aws_cloudwatch_dashboard" "main_monitoring" {
         height = 6
         properties = {
           metrics = [
-            for id in compact([var.module_instance_id, var.module_sub_instance_id]) : 
-            [ "Custom/System", "DiskUsageRootPercent", "InstanceId", id ]
+            for id in compact([var.module_instance_id, var.module_sub_instance_id]) :
+            ["Custom/System", "DiskUsageRootPercent", "InstanceId", id]
           ]
-          period = tonumber(var.network_period)
-          stat   = "Average"
-          region = "eu-west-2"
-          title  = "Disk Usage (Root Partition %)"
-          view   = "timeSeries"
+          period  = tonumber(var.network_period)
+          stat    = "Average"
+          region  = "eu-west-2"
+          title   = "Disk Usage (Root Partition %)"
+          view    = "timeSeries"
           stacked = false
         }
       }
