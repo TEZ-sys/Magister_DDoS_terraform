@@ -34,7 +34,7 @@ resource "aws_cloudwatch_log_metric_filter" "error_logs" {
 # Metric filter for high MySQL connections
 resource "aws_cloudwatch_log_metric_filter" "high_mysql_connections" {
   count          = var.create_resource["logging"] ? 1 : 0
-  name           = "HighMySQLConnections"
+  name           = "\"High MySQL connections\""
   log_group_name = aws_cloudwatch_log_group.log_group[0].name
 
   pattern = "High MySQL connections"
@@ -68,8 +68,8 @@ resource "aws_cloudwatch_log_metric_filter" "test_alerts" {
   name           = "TestAlertCount"
   log_group_name = aws_cloudwatch_log_group.log_group[0].name
 
-  # This matches the specific string from your echo command
-  pattern = "\"This is a test error\""
+  # Matches the script's echo "Test alert triggered!"
+  pattern = "Test alert" 
 
   metric_transformation {
     name          = "TestAlertCount"

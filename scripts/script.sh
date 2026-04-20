@@ -3,7 +3,7 @@
 # Redirect output to log file for debugging
 exec > /var/log/user-data.log 2>&1
 echo "Starting user-data script at $(date)"
-LOG_GROUP_NAME="/ubuntu/logs"
+LOG_GROUP_NAME="nebo_log_group"
 
 # Update packages
 echo "Updating packages..."
@@ -191,89 +191,48 @@ echo "Testing MySQL connection..."
 mysql -u monitor_user -pYourSecurePassword123 -e "SHOW DATABASES;" || echo "MySQL connection test failed"
 
 # Create Python script for MySQL metrics
-cat << 'EOT' > /usr/local/bin/publish_mysql_metrics.py
+cat << 'EOF' > /usr/local/bin/publish_mysql_metrics.py
 #!/usr/bin/env python3
 import boto3
 import mysql.connector
-from datetime import datetime
-import os
-import sys
 import requests
 
+# Get Metadata
+token = requests.put("http://169.254.169.254/latest/api/token", headers={"X-aws-ec2-metadata-token-ttl-seconds": "21600"}).text
+INSTANCE_ID = requests.get("http://169.254.169.254/latest/meta-data/instance-id", headers={"X-aws-ec2-metadata-token": token}).text
 
-try:
-    token_url = "http://169.254.169.254/latest/api/token"
-    token_headers = {"X-aws-ec2-metadata-token-ttl-seconds": "21600"}
-    token_response = requests.put(token_url, headers=token_headers, timeout=5)
-    token = token_response.text
+cloudwatch = boto3.client('cloudwatch', region_name='eu-west-2')
+db = mysql.connector.connect(host="localhost", user="monitor_user", password="YourSecurePassword123")
 
-    id_url = "http://169.254.169.254/latest/meta-data/instance-id"
-    id_headers = {"X-aws-ec2-metadata-token": token}
-    INSTANCE_ID = requests.get(id_url, headers=id_headers, timeout=5).text.strip()
+NAMESPACE = 'Custom/Application'
 
-    cloudwatch = boto3.client('cloudwatch', region_name='eu-west-2')
-
-
-    
-    db = mysql.connector.connect(
-        host="localhost",
-        user="monitor_user",
-        password="YourSecurePassword123"
+def put_metric(metric_name, value, unit='Count'):
+    cloudwatch.put_metric_data(
+        Namespace=NAMESPACE,
+        MetricData=[{
+            'MetricName': metric_name,
+            'Value': value,
+            'Unit': unit,
+            'Dimensions': [
+                {'Name': 'InstanceId', 'Value': INSTANCE_ID},
+                {'Name': 'Database', 'Value': 'mysql'}
+            ]
+        }]
     )
-    
-    NAMESPACE = 'Custom/Application'
 
-    
-    def get_mysql_status(variable_name):
-        cursor = db.cursor()
-        cursor.execute(f"SHOW GLOBAL STATUS LIKE '{variable_name}'")
-        result = cursor.fetchone()
-        cursor.close()
-        return int(result[1]) if result else 0
-    
-    def put_metric(metric_name, value, unit='Count'):
-        cloudwatch.put_metric_data(
-            Namespace=NAMESPACE,
-            MetricData=[{
-                'MetricName': metric_name,
-                'Value': value,
-                'Unit': unit,
-                'Timestamp': datetime.utcnow(),
-                'Dimensions': [
-                    {'Name': 'InstanceId', 'Value': INSTANCE_ID},
-                    {'Name': 'Database', 'Value': 'mysql'}
-                ]
-            }]
-        )
-    
-    # Collect metrics
-    active_connections = get_mysql_status('Threads_connected')
-    slow_queries = get_mysql_status('Slow_queries')
-    questions = get_mysql_status('Questions')
-    aborted_connects = get_mysql_status('Aborted_connects')
-    
-    # Send metrics
-    put_metric('MySQLActiveConnections', active_connections, 'Count')
-    put_metric('MySQLSlowQueries', slow_queries, 'Count')
-    put_metric('MySQLQueriesPerMinute', questions, 'Count')
-    put_metric('MySQLAbortedConnections', aborted_connects, 'Count')
-    
-    # Calculate buffer pool hit rate
-    buffer_reads = get_mysql_status('Innodb_buffer_pool_reads')
-    buffer_read_requests = get_mysql_status('Innodb_buffer_pool_read_requests')
-    
-    if buffer_read_requests > 0:
-        hit_rate = (1 - (buffer_reads / buffer_read_requests)) * 100
-        put_metric('MySQLBufferPoolHitRate', hit_rate, 'Percent')
-    
-    print(f"MySQL metrics sent: {active_connections} connections, {slow_queries} slow queries")
-    
-    db.close()
+cursor = db.cursor()
 
-except Exception as e:
-    print(f"Error: {e}", file=sys.stderr)
-    sys.exit(1)
-EOT
+cursor.execute("SHOW GLOBAL STATUS LIKE 'Threads_connected'")
+row = cursor.fetchone()
+put_metric('MySQLActiveConnections', int(row[1]))
+
+cursor.execute("SHOW GLOBAL STATUS LIKE 'Slow_queries'")
+row = cursor.fetchone()
+put_metric('MySQLSlowQueries', int(row[1]))
+
+db.close()
+print(f"Done. ActiveConnections={row[1]}")
+EOF
 
 chmod +x /usr/local/bin/publish_mysql_metrics.py
 
@@ -296,7 +255,7 @@ echo "$(date '+%Y-%m-%d %H:%M:%S') InstanceId=$INSTANCE_ID MySQLConnections=$CON
 
 # Check if connections are high and log ERROR
 if [ "$CONNECTIONS" -gt 50 ]; then
-  echo "$(date '+%Y-%m-%d %H:%M:%S') ERROR: High MySQL connections detected: $CONNECTIONS" >> $LOG_FILE
+  echo "$(date '+%Y-%m-%d %H:%M:%S') ERROR: High MySQL connections: $CONNECTIONS" >> $LOG_FILE
 fi
 
 # Check if connections are very high and log CRITICAL
@@ -308,40 +267,21 @@ EOT
 
 chmod +x /usr/local/bin/log_mysql_status.sh
 
-# Add to cron to run every minute
-
 cat << 'EOT' > /usr/local/bin/monitor_and_push.sh
 #!/bin/bash
-touch /tmp/app.log
 LOG_FILE="/tmp/app.log"
-# This matches your desired path
-LOG_GROUP="/ubuntu/logs"
+LOG_GROUP="nebo_log_group"
 LOG_STREAM="TestAlertStream"
-
-# Ensure the log group exists first
-aws logs create-log-group --log-group-name "$LOG_GROUP" 2>/dev/null
-# Ensure log stream exists
-aws logs create-log-stream --log-group-name "$LOG_GROUP" --log-stream-name "$LOG_STREAM" 2>/dev/null
-
-echo "Monitoring $LOG_FILE and pushing to $LOG_GROUP..."
 
 (
   while true; do
-    TIMESTAMP=$(date)
-    if (( $RANDOM % 5 == 0 )); then
-      echo "[$TIMESTAMP] CRITICAL: Test alert detected!" >> $LOG_FILE
-    else
-      echo "[$TIMESTAMP] INFO: Normal operation." >> $LOG_FILE
-    fi
-    sleep 2
+    echo "[$(date)] Test alert triggered!" >> $LOG_FILE
+    sleep 60
   done
 ) &
 
 tail -Fn0 "$LOG_FILE" | while read LINE; do
   if [[ "$LINE" == *"Test alert"* ]]; then
-    echo "Match found! Pushing to CloudWatch..."
-    
-    # Unified the group and stream names to use the variables defined at the top
     aws logs put-log-events \
       --log-group-name "$LOG_GROUP" \
       --log-stream-name "$LOG_STREAM" \
