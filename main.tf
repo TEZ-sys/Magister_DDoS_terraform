@@ -68,6 +68,7 @@ module "compute" {
   scale_out_capacity = var.scaleout_capacity
   resource_owner     = var.resource_owner
   monitoring_profile = module.iam.module_iam_monitoring_profile
+  custom_instance_profile = module.iam.module_iam_custom_profile
   environment        = local.environment
   key_name           = var.key_name
 
@@ -92,9 +93,11 @@ module "domain" {
 
 module "iam" {
   source          = "./modules/iam"
+  region          = var.region
   create_resource = var.create_resource
   resource_owner  = var.resource_owner
   environment     = local.environment
+  secrets_arn     = var.secret_arn
 
 }
 module "load_balancer" {

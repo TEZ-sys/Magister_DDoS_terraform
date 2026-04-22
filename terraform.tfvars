@@ -10,3 +10,4 @@ region            = "eu-west-2"
 network_threshold = 2000000
 comparison        = "GreaterThanOrEqualToThreshold"
 email_address     = ""
+secret_arn        = ""

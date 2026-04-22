@@ -66,3 +66,8 @@ variable "key_name" {
   description = "Key name for EC2 instances"
   type        = string
 }
+variable "custom_instance_profile" {
+  description = "Instance profile name for the custom EC2 (DB) instance"
+  type        = string
+  default     = null
+}
