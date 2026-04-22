@@ -69,7 +69,7 @@ resource "aws_cloudwatch_log_metric_filter" "test_alerts" {
   log_group_name = aws_cloudwatch_log_group.log_group[0].name
 
   # Matches the script's echo "Test alert triggered!"
-  pattern = "Test alert" 
+  pattern = "Test alert"
 
   metric_transformation {
     name          = "TestAlertCount"

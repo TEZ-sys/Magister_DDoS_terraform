@@ -312,13 +312,13 @@ resource "aws_cloudwatch_metric_alarm" "cpu_anomaly_alarm" {
 
   metric_query {
     id          = "m1"
-    return_data = true 
+    return_data = true
     metric {
       metric_name = var.metric_name["cpu"]
       namespace   = var.name_space["ec2"]
       period      = 600
       stat        = "Average"
-      dimensions = { InstanceId = var.module_instance_id }
+      dimensions  = { InstanceId = var.module_instance_id }
     }
   }
 
@@ -326,7 +326,7 @@ resource "aws_cloudwatch_metric_alarm" "cpu_anomaly_alarm" {
     id          = "ad1"
     expression  = "ANOMALY_DETECTION_BAND(m1, 2)"
     label       = "CPU (Expected Range)"
-    return_data = true 
+    return_data = true
   }
 }
 #--------------------------------------Composite-Alarms---------------------------------------------

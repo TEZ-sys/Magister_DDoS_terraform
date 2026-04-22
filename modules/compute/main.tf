@@ -46,13 +46,37 @@ resource "aws_instance" "sub_instance" {
       region      = var.region
   })
 
-  #user_data = file("${path.root}/scripts/install_apps.sh")
   tags = {
     Name        = var.resource_owner["name"]
     Owner       = var.resource_owner["owner"]
     Environment = var.environment
   }
 }
+
+#-----------------------------------------sub-2-instance---------------------------------------
+resource "aws_instance" "sub_instance_2" {
+  count                  = var.create_resource["instance_custom"] ? 1 : 0
+  vpc_security_group_ids = [aws_security_group.security_group_for_db[count.index].id]
+  ami                    = var.ami
+  instance_type          = var.inst_type
+  subnet_id              = var.public_subnet_id
+  iam_instance_profile = var.custom_instance_profile
+
+  key_name = var.key_name
+  user_data = templatefile("${path.root}/scripts/install_db.sh",
+    {
+      region = var.region
+      environment = var.environment
+  })
+
+  tags = {
+    Name        = var.resource_owner["name"]
+    Owner       = var.resource_owner["owner"]
+    Environment = var.environment
+  }
+}
+
+
 
 #-----------------------------------------Auto-scaling-group---------------------------------------
 resource "aws_launch_template" "launch_template" {
@@ -63,13 +87,13 @@ resource "aws_launch_template" "launch_template" {
   network_interfaces {
     security_groups = [aws_security_group.security_group[count.index].id]
   }
-  user_data = base64encode(<<-EOT
-   #!/bin/bash
-    apt-get update -y
-    apt-get install nginx -y
-    ufw allow 80
-EOT
-  )
+
+  user_data = templatefile("${path.root}/scripts/script.sh",
+    {
+      environment = var.environment
+      region      = var.region
+  })
+
   tags = {
     Name        = var.resource_owner["name"]
     Owner       = var.resource_owner["owner"]
@@ -144,6 +168,40 @@ resource "aws_security_group" "security_group" {
   }
 }
 
+resource "aws_security_group" "security_group_for_db" {
+  count       = var.create_resource["instance_custom"] ? 1 : 0
+  name_prefix = "Security-Group for standart"
+
+  vpc_id = var.vpc_id
+
+  dynamic "ingress" {
+    for_each = var.ports
+    content {
+      from_port   = ingress.value
+      to_port     = ingress.value
+      protocol    = "tcp"
+      cidr_blocks = var.CIDR
+    }
+  }
+  ingress {
+    from_port   = -1
+    to_port     = -1
+    protocol    = "icmp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = var.CIDR
+  }
+
+  tags = {
+    Name        = var.resource_owner["name"]
+    Owner       = var.resource_owner["owner"]
+    Environment = var.environment
+  }
+}
 
 resource "aws_security_group" "alb_sg" {
   count = var.create_resource["load_balance"] ? 1 : 0
